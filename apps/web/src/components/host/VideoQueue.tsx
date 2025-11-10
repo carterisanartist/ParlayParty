@@ -19,7 +19,7 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
 
   useEffect(() => {
     socket.on('queue:updated', ({ videos: updatedVideos }) => {
-      setVideos(updatedVideos.sort((a, b) => a.order - b.order));
+      setVideos(updatedVideos.sort((a: any, b: any) => a.order - b.order));
     });
 
     return () => {
