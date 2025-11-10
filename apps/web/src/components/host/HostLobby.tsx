@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 import { PlayerAvatar } from '../PlayerAvatar';
 import { VideoQueue } from './VideoQueue';
 import type { Player } from '@parlay-party/shared';
@@ -128,11 +129,23 @@ export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobb
         </div>
       </div>
 
-      <div className="text-center text-fg-subtle space-y-2">
-        <p className="text-lg">Players scan the QR code or visit:</p>
-        <p className="font-mono text-xl text-accent-1">
-          {typeof window !== 'undefined' && `${window.location.origin}/play/${roomCode}`}
-        </p>
+      <div className="text-center space-y-6">
+        <div className="card-neon inline-block p-8">
+          <p className="text-lg font-semibold mb-4 text-fg-subtle">SCAN TO JOIN</p>
+          {typeof window !== 'undefined' && (
+            <QRCodeSVG
+              value={`${window.location.origin}/play/${roomCode}`}
+              size={200}
+              bgColor="#121212"
+              fgColor="#00FFF7"
+              level="H"
+              className="mx-auto"
+            />
+          )}
+          <p className="mt-4 font-mono text-lg text-accent-1">
+            {typeof window !== 'undefined' && `${window.location.origin}/play/${roomCode}`}
+          </p>
+        </div>
       </div>
     </div>
   );

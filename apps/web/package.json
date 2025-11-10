@@ -20,7 +20,8 @@
     "pixi.js": "^7.3.3",
     "tone": "^14.7.77",
     "nanoid": "^3.3.7",
-    "zustand": "^4.4.7"
+    "zustand": "^4.4.7",
+    "qrcode.react": "^3.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

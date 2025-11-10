@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import YouTube from 'react-youtube';
 import { audioManager } from '@/lib/audio';
 import type { Player, Round, Parlay } from '@parlay-party/shared';
 import type { Socket } from 'socket.io-client';
@@ -17,6 +18,7 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
   const [cooldown, setCooldown] = useState(false);
   const [showParlayPicker, setShowParlayPicker] = useState(false);
   const [allParlays, setAllParlays] = useState<Parlay[]>([]);
+  const [showVideoOnPhone, setShowVideoOnPhone] = useState(false);
   const videoTimeRef = useRef(0);
 
   useEffect(() => {
@@ -58,9 +60,44 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
 
   return (
     <div className="min-h-screen flex flex-col p-4 space-y-6">
-      {/* Show All Parlays at Top */}
+      {/* Video Toggle */}
+      <div className="flex justify-between items-center">
+        <h1 className="font-display text-2xl glow-cyan">WATCH & CALL</h1>
+        <button
+          onClick={() => setShowVideoOnPhone(!showVideoOnPhone)}
+          className="px-4 py-2 rounded-lg border-2 border-accent-3 text-accent-3 text-sm font-semibold"
+        >
+          {showVideoOnPhone ? '📱 Hide Video' : '📺 Show Video'}
+        </button>
+      </div>
+
+      {/* Optional Video on Phone */}
+      {showVideoOnPhone && round.videoType === 'youtube' && round.videoId && (
+        <div className="card-neon p-2">
+          <div className="aspect-video bg-black rounded-lg overflow-hidden">
+            <YouTube
+              videoId={round.videoId}
+              opts={{
+                width: '100%',
+                height: '100%',
+                playerVars: {
+                  autoplay: 0,
+                  controls: 1,
+                  modestbranding: 1,
+                },
+              }}
+              className="w-full h-full"
+            />
+          </div>
+          <p className="text-xs text-center text-fg-subtle mt-2">
+            Syncs with host screen
+          </p>
+        </div>
+      )}
+
+      {/* Show All Parlays */}
       <div className="card-neon p-4 max-w-2xl mx-auto w-full">
-        <h2 className="font-display text-2xl glow-cyan mb-4 text-center">
+        <h2 className="font-display text-xl glow-cyan mb-3 text-center">
           WATCH FOR THESE:
         </h2>
         <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -172,7 +209,8 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
       </AnimatePresence>
 
       <div className="text-center text-fg-subtle text-sm">
-        <p>Watch the host screen for video</p>
+        <p>{showVideoOnPhone ? 'Video syncs with host' : 'Watch the host screen'}</p>
+        <p className="text-xs mt-1">Toggle video above if needed</p>
       </div>
     </div>
   );
