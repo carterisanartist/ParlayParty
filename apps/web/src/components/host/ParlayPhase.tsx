@@ -27,11 +27,29 @@ export function ParlayPhase({ socket, round, players }: ParlayPhaseProps) {
     };
   }, [socket]);
 
+  // Auto-lock when all NON-HOST players submit
+  useEffect(() => {
+    const nonHostPlayers = players.filter(p => !p.isHost);
+    const nonHostSubmitted = Array.from(submittedPlayers).filter(id => 
+      nonHostPlayers.some(p => p.id === id)
+    );
+    
+    if (nonHostPlayers.length > 0 && nonHostSubmitted.length === nonHostPlayers.length) {
+      // All non-host players have submitted
+      setTimeout(() => {
+        socket.emit('parlay:lock');
+      }, 1000); // 1 second delay before auto-lock
+    }
+  }, [submittedPlayers, players, socket]);
+
   const handleLock = () => {
     socket.emit('parlay:lock');
   };
 
-  const progress = (submittedPlayers.size / players.length) * 100;
+  const nonHostPlayers = players.filter(p => !p.isHost);
+  const progress = nonHostPlayers.length > 0 
+    ? (Array.from(submittedPlayers).filter(id => nonHostPlayers.some(p => p.id === id)).length / nonHostPlayers.length) * 100
+    : 0;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
@@ -48,7 +66,7 @@ export function ParlayPhase({ socket, round, players }: ParlayPhaseProps) {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-lg font-semibold">
-              {submittedPlayers.size} / {players.length} Locked In
+              {Array.from(submittedPlayers).filter(id => nonHostPlayers.some(p => p.id === id)).length} / {nonHostPlayers.length} Players Locked In
             </span>
             <span className="text-accent-1 font-mono">{Math.round(progress)}%</span>
           </div>

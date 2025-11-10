@@ -242,6 +242,7 @@ export function setupSocketHandlers(io: Server) {
             videoType: nextVideo.videoType,
             videoId: nextVideo.videoId,
             videoUrl: nextVideo.videoUrl,
+            videoTitle: nextVideo.title,
             status: 'parlay',
           },
         });
@@ -373,22 +374,23 @@ export function setupSocketHandlers(io: Server) {
           data: { status: 'video' },
         });
         
-        // Fetch and broadcast all parlays with player info
+        // Fetch and broadcast all parlays - SIMPLIFIED for better compatibility
         const allParlays = await prisma.parlay.findMany({
           where: { roundId: round.id },
-          include: {
-            player: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true,
-              },
-            },
-          },
         });
         
+        // Convert to plain objects
+        const parlaysToSend = allParlays.map(p => ({
+          id: p.id,
+          text: p.text,
+          normalizedText: p.normalizedText,
+          playerId: p.playerId,
+        }));
+        
+        console.log('Broadcasting parlays:', parlaysToSend.length);
+        
         io.to(`room:${roomCode}`).emit('parlay:locked');
-        io.to(`room:${roomCode}`).emit('parlay:all', { parlays: allParlays });
+        io.to(`room:${roomCode}`).emit('parlay:all', { parlays: parlaysToSend });
         io.to(`room:${roomCode}`).emit('round:status', { status: 'video' });
       } catch (error) {
         console.error('Error locking parlays:', error);

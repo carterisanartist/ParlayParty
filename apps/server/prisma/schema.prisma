@@ -50,6 +50,7 @@ model Round {
   videoType   String
   videoId     String?
   videoUrl    String?
+  videoTitle  String?
   durationSec Float?
   status      String   @default("pending")
   createdAt   DateTime @default(now())

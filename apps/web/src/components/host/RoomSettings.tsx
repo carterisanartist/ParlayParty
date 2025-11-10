@@ -115,10 +115,10 @@ export function RoomSettingsPanel({ settings, onChange }: RoomSettingsProps) {
             <p className="text-xs text-fg-subtle mt-1">Completion bonus multiplier</p>
           </div>
 
-          {/* Two Player Mode */}
+          {/* Game Modes */}
           <div>
             <label className="block text-sm font-semibold mb-2 text-fg-subtle">
-              TWO-PLAYER MODE
+              GAME MODES
             </label>
             <select
               value={settings.twoPlayerMode}
@@ -128,14 +128,19 @@ export function RoomSettingsPanel({ settings, onChange }: RoomSettingsProps) {
                   twoPlayerMode: e.target.value as any,
                 })
               }
-              className="input-neon w-full"
+              className="input-neon w-full text-sm"
             >
-              <option value="unanimous">Unanimous (both agree)</option>
-              <option value="single_caller_verify">Single Caller + Verify</option>
-              <option value="judge_mode">Judge Mode</option>
-              <option value="speed_call">Speed Call</option>
+              <option value="unanimous">Unanimous - Both players must agree on same event</option>
+              <option value="single_caller_verify">Single Caller - First calls, second verifies within 2s</option>
+              <option value="judge_mode">Judge Mode - Host confirms every call manually</option>
+              <option value="speed_call">Speed Call - First correct caller scores instantly</option>
             </select>
-            <p className="text-xs text-fg-subtle mt-1">Special rules for 2-player games</p>
+            <p className="text-xs text-fg-subtle mt-1">
+              {settings.twoPlayerMode === 'unanimous' && 'Both players must call the same event within 1.5s to pause'}
+              {settings.twoPlayerMode === 'single_caller_verify' && 'First call opens 2s window for second player to match'}
+              {settings.twoPlayerMode === 'judge_mode' && 'Any call pauses for host review'}
+              {settings.twoPlayerMode === 'speed_call' && 'First correct gets points, opponent has 3s to match'}
+            </p>
           </div>
 
           <button

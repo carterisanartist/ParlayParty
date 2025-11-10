@@ -27,20 +27,37 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
     };
   }, [socket]);
 
-  const handleAddVideo = () => {
+  const handleAddVideo = async () => {
     if (!videoUrl.trim()) return;
 
     let videoId = '';
+    let autoTitle = title.trim();
+    
     if (videoType === 'youtube') {
       const match = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
       videoId = match ? match[1] : '';
+      
+      // Fetch YouTube title if not provided
+      if (!autoTitle && videoId) {
+        try {
+          const response = await fetch(
+            `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            autoTitle = data.title;
+          }
+        } catch (e) {
+          console.error('Failed to fetch title:', e);
+        }
+      }
     }
 
     socket.emit('queue:add', {
       videoType,
       videoUrl: videoType === 'youtube' ? undefined : videoUrl,
       videoId: videoType === 'youtube' ? videoId : undefined,
-      title: title.trim() || undefined,
+      title: autoTitle || undefined,
     });
 
     setVideoUrl('');

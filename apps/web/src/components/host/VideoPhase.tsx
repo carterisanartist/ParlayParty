@@ -5,6 +5,7 @@ import YouTube, { YouTubePlayer } from 'react-youtube';
 import { motion } from 'framer-motion';
 import { CinematicPause } from '../CinematicPause';
 import { Scoreboard } from '../Scoreboard';
+import { EventLog } from './EventLog';
 import type { Player, Round } from '@parlay-party/shared';
 import type { Socket } from 'socket.io-client';
 
@@ -140,6 +141,15 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Video Title */}
+      {round.videoTitle && (
+        <div className="text-center">
+          <h2 className="font-display text-3xl glow-cyan tracking-wider">
+            {round.videoTitle}
+          </h2>
+        </div>
+      )}
+      
       <div className="relative">
         {round.videoType === 'youtube' && round.videoId && (
           <div className="aspect-video bg-black rounded-xl overflow-hidden">

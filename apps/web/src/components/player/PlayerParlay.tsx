@@ -18,8 +18,12 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getVideoTitle = () => {
-    if (round.videoType === 'youtube' && round.videoId) {
-      return `YouTube Video`;
+    // Use round.videoTitle if available, otherwise generic
+    if (round.videoTitle) {
+      return round.videoTitle;
+    }
+    if (round.videoType === 'youtube') {
+      return 'YouTube Video';
     }
     if (round.videoType === 'tiktok') {
       return 'TikTok Video';
