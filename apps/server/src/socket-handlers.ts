@@ -312,8 +312,8 @@ export function setupSocketHandlers(io: Server) {
             roundId: round.id,
             normalizedText,
             tVideoSec: {
-              gte: tCenter - settings.voteWindowSec,
-              lte: tCenter + settings.voteWindowSec,
+              gte: tCenter - roomSettings.voteWindowSec,
+              lte: tCenter + roomSettings.voteWindowSec,
             },
           },
         });
