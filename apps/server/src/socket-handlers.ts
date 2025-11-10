@@ -303,7 +303,7 @@ export function setupSocketHandlers(io: Server) {
           where: { roundId: round.id, normalizedText },
         });
         
-        const settings = room.settings as any as RoomSettings;
+        const roomSettings = room.settings as any as RoomSettings;
         const awardedPlayerIds: string[] = [];
         const scoreUpdates: any[] = [];
         
@@ -323,13 +323,13 @@ export function setupSocketHandlers(io: Server) {
         
         for (const parlay of matchingParlays) {
           const playerVote = allVotes.find(v => v.playerId === parlay.playerId);
-          const fastTap = playerVote ? Math.abs(playerVote.tVideoSec - medianTime) <= settings.fastTapWindow : false;
+          const fastTap = playerVote ? Math.abs(playerVote.tVideoSec - medianTime) <= roomSettings.fastTapWindow : false;
           
           const scoreCalc = await calculateEventScore(
             round.id,
             normalizedText,
             parlay.playerId,
-            settings.scoreMultiplier,
+            roomSettings.scoreMultiplier,
             fastTap
           );
           
@@ -383,8 +383,7 @@ export function setupSocketHandlers(io: Server) {
         io.to(`room:${roomCode}`).emit('event:confirmed', { event });
         io.to(`room:${roomCode}`).emit('scoreboard:update', { scores: scoreUpdates });
         
-        const settings = room.settings as any as RoomSettings;
-        const pauseDuration = (settings.pauseDurationSec || 20) * 1000;
+        const pauseDuration = (roomSettings.pauseDurationSec || 20) * 1000;
         
         setTimeout(() => {
           io.to(`room:${roomCode}`).emit('video:resume');
