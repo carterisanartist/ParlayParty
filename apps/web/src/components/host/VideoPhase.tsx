@@ -139,7 +139,7 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
                   controls: 1,
                 },
               }}
-              onReady={(e) => setPlayer(e.target)}
+              onReady={(e: any) => setPlayer(e.target)}
               onEnd={() => setVideoEnded(true)}
               className="w-full h-full"
             />
