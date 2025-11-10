@@ -6,6 +6,7 @@ import { useSocket, measureLatency } from '@/lib/socket';
 import { audioManager } from '@/lib/audio';
 import { PlayerJoin } from '@/components/player/PlayerJoin';
 import { PlayerParlay } from '@/components/player/PlayerParlay';
+import { PlayerReveal } from '@/components/player/PlayerReveal';
 import { PlayerVideo } from '@/components/player/PlayerVideo';
 import { PlayerWheel } from '@/components/player/PlayerWheel';
 import { PlayerResults } from '@/components/player/PlayerResults';
@@ -21,6 +22,7 @@ export default function PlayerPage() {
   const [currentRound, setCurrentRound] = useState<Round | null>(null);
   const [status, setStatus] = useState<RoomStatus>('lobby');
   const [hasJoined, setHasJoined] = useState(false);
+  const [showReveal, setShowReveal] = useState(false);
 
   useEffect(() => {
     if (!socket || !connected) return;
@@ -39,7 +41,15 @@ export default function PlayerPage() {
       setStatus(status as RoomStatus);
     });
 
+    socket.on('parlay:locked', () => {
+      setShowReveal(true);
+      setTimeout(() => {
+        setShowReveal(false);
+      }, 5000);
+    });
+
     return () => {
+      socket.off('parlay:locked');
       socket.off('room:update');
       socket.off('round:started');
       socket.off('round:status');
@@ -107,8 +117,16 @@ export default function PlayerPage() {
         />
       )}
       
-      {status === 'video' && currentRound && (
+      {status === 'video' && !showReveal && currentRound && (
         <PlayerVideo
+          socket={socket}
+          round={currentRound}
+          player={currentPlayer}
+        />
+      )}
+      
+      {status === 'video' && showReveal && currentRound && (
+        <PlayerReveal
           socket={socket}
           round={currentRound}
           player={currentPlayer}

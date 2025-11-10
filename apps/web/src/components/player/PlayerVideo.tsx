@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { audioManager } from '@/lib/audio';
-import type { Player, Round } from '@parlay-party/shared';
+import type { Player, Round, Parlay } from '@parlay-party/shared';
 import type { Socket } from 'socket.io-client';
 
 interface PlayerVideoProps {
@@ -15,6 +15,8 @@ interface PlayerVideoProps {
 export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
   const [lastCallTime, setLastCallTime] = useState<number | null>(null);
   const [cooldown, setCooldown] = useState(false);
+  const [showParlayPicker, setShowParlayPicker] = useState(false);
+  const [allParlays, setAllParlays] = useState<Parlay[]>([]);
   const videoTimeRef = useRef(0);
 
   useEffect(() => {
@@ -22,20 +24,28 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
       videoTimeRef.current = tVideoSec;
     });
 
+    socket.on('parlay:all', ({ parlays }) => {
+      setAllParlays(parlays);
+    });
+
     return () => {
       socket.off('host:sync');
+      socket.off('parlay:all');
     };
   }, [socket]);
 
   const handleItHappened = () => {
     if (cooldown) return;
+    setShowParlayPicker(true);
+    audioManager.playButtonClick();
+  };
 
-    const now = Date.now();
+  const handleSelectParlay = (normalizedText: string) => {
     const tVideoSec = videoTimeRef.current;
 
-    socket.emit('vote:add', { tVideoSec });
+    socket.emit('vote:add', { tVideoSec, normalizedText });
     setLastCallTime(tVideoSec);
-    audioManager.playButtonClick();
+    setShowParlayPicker(false);
 
     navigator.vibrate?.(100);
 
@@ -44,64 +54,117 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 space-y-8">
-      <motion.div
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="text-center space-y-4"
-      >
-        <h1 className="font-display text-4xl glow-cyan tracking-wider">
-          WATCH & CALL
-        </h1>
-        <p className="text-lg text-fg-subtle">
-          Tap when your prediction happens!
-        </p>
-      </motion.div>
+    <div className="min-h-screen flex flex-col p-4 space-y-6">
+      {/* Show All Parlays at Top */}
+      <div className="card-neon p-4 max-w-2xl mx-auto w-full">
+        <h2 className="font-display text-2xl glow-cyan mb-4 text-center">
+          WATCH FOR THESE:
+        </h2>
+        <div className="space-y-2 max-h-48 overflow-y-auto">
+          {allParlays.map((parlay) => (
+            <div
+              key={parlay.id}
+              className="bg-bg-0 rounded-lg p-3 border border-accent-1/30"
+            >
+              <p className="text-sm text-fg-0">"{parlay.text}"</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        onClick={handleItHappened}
-        disabled={cooldown}
-        className={`
-          w-80 h-80 rounded-full
-          font-display text-4xl tracking-wider
-          transition-all duration-200
-          ${cooldown 
-            ? 'bg-bg-0 border-4 border-fg-subtle/30 text-fg-subtle cursor-not-allowed' 
-            : 'btn-neon-pink breathing-glow shadow-2xl'
-          }
-        `}
-      >
-        {cooldown ? (
-          <div className="space-y-2">
-            <div className="text-2xl">⏱️</div>
-            <div>COOLDOWN</div>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="text-6xl">🎯</div>
-            <div>IT HAPPENED!</div>
-          </div>
-        )}
-      </motion.button>
-
-      {lastCallTime !== null && (
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="card-neon p-6 text-center"
+      {/* It Happened Button */}
+      <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleItHappened}
+          disabled={cooldown}
+          className={`
+            w-72 h-72 rounded-full
+            font-display text-3xl tracking-wider
+            transition-all duration-200
+            ${cooldown 
+              ? 'bg-bg-0 border-4 border-fg-subtle/30 text-fg-subtle cursor-not-allowed' 
+              : 'btn-neon-pink breathing-glow shadow-2xl'
+            }
+          `}
         >
-          <p className="text-accent-1 font-semibold text-xl">
-            ✓ Called @ {lastCallTime.toFixed(1)}s
-          </p>
-        </motion.div>
-      )}
+          {cooldown ? (
+            <div className="space-y-2">
+              <div className="text-2xl">⏱️</div>
+              <div>COOLDOWN</div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="text-6xl">🎯</div>
+              <div>IT HAPPENED!</div>
+            </div>
+          )}
+        </motion.button>
 
-      <div className="text-center text-fg-subtle text-sm space-y-1">
-        <p>Watch the host screen</p>
-        <p>for video playback</p>
+        {lastCallTime !== null && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="card-neon p-4 text-center"
+          >
+            <p className="text-accent-1 font-semibold text-lg">
+              ✓ Called @ {lastCallTime.toFixed(1)}s
+            </p>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Parlay Picker Modal */}
+      <AnimatePresence>
+        {showParlayPicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowParlayPicker(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="card-neon p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto"
+            >
+              <h2 className="font-display text-3xl glow-pink mb-6 text-center">
+                WHAT HAPPENED?
+              </h2>
+
+              <div className="space-y-3">
+                {allParlays.map((parlay) => (
+                  <motion.button
+                    key={parlay.id}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleSelectParlay(parlay.normalizedText)}
+                    className="w-full bg-bg-0 border-2 border-accent-1 rounded-lg p-4 text-left hover:bg-accent-1/10 transition-all"
+                  >
+                    <p className="text-lg font-semibold text-fg-0">
+                      "{parlay.text}"
+                    </p>
+                  </motion.button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setShowParlayPicker(false)}
+                className="w-full mt-6 py-3 bg-danger/20 border-2 border-danger text-danger rounded-lg font-semibold"
+              >
+                CANCEL
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="text-center text-fg-subtle text-sm">
+        <p>Watch the host screen for video</p>
       </div>
     </div>
   );
 }
-

@@ -7,6 +7,7 @@ import { audioManager } from '@/lib/audio';
 import { VFXLayer } from '@/components/VFXLayer';
 import { HostLobby } from '@/components/host/HostLobby';
 import { ParlayPhase } from '@/components/host/ParlayPhase';
+import { ParlayReveal } from '@/components/host/ParlayReveal';
 import { VideoPhase } from '@/components/host/VideoPhase';
 import { ReviewPhase } from '@/components/host/ReviewPhase';
 import { WheelPhase } from '@/components/host/WheelPhase';
@@ -23,6 +24,7 @@ export default function HostPage() {
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [currentRound, setCurrentRound] = useState<Round | null>(null);
   const [status, setStatus] = useState<RoomStatus>('lobby');
+  const [showReveal, setShowReveal] = useState(false);
 
   useEffect(() => {
     if (!socket || !connected) return;
@@ -60,7 +62,16 @@ export default function HostPage() {
       audioManager.playButtonClick();
     });
 
+    socket.on('parlay:locked', () => {
+      audioManager.playLockIn();
+      setShowReveal(true);
+      setTimeout(() => {
+        setShowReveal(false);
+      }, 5000);
+    });
+
     return () => {
+      socket.off('parlay:locked');
       socket.off('roster:update');
       socket.off('room:update');
       socket.off('round:started');
@@ -109,8 +120,16 @@ export default function HostPage() {
           />
         )}
         
-        {status === 'video' && currentRound && (
+        {status === 'video' && !showReveal && currentRound && (
           <VideoPhase
+            socket={socket}
+            round={currentRound}
+            players={players}
+          />
+        )}
+        
+        {status === 'video' && showReveal && currentRound && (
+          <ParlayReveal
             socket={socket}
             round={currentRound}
             players={players}

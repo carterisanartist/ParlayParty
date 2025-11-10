@@ -13,6 +13,7 @@ export interface RoomSettings {
   fastTapWindow: number;
   twoPlayerMode: TwoPlayerMode;
   scoreMultiplier: number;
+  pauseDurationSec: number;
 }
 
 export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
@@ -23,6 +24,7 @@ export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   fastTapWindow: 1.0,
   twoPlayerMode: 'unanimous',
   scoreMultiplier: 3.0,
+  pauseDurationSec: 20,
 };
 
 export interface Player {

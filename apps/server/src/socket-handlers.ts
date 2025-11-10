@@ -192,7 +192,13 @@ export function setupSocketHandlers(io: Server) {
           data: { status: 'video' },
         });
         
+        // Fetch and broadcast all parlays to all players
+        const allParlays = await prisma.parlay.findMany({
+          where: { roundId: round.id },
+        });
+        
         io.to(`room:${roomCode}`).emit('parlay:locked');
+        io.to(`room:${roomCode}`).emit('parlay:all', { parlays: allParlays });
         io.to(`room:${roomCode}`).emit('round:status', { status: 'video' });
       } catch (error) {
         console.error('Error locking parlays:', error);
@@ -200,7 +206,7 @@ export function setupSocketHandlers(io: Server) {
       }
     });
     
-    socket.on('vote:add', async ({ tVideoSec }) => {
+    socket.on('vote:add', async ({ tVideoSec, normalizedText }) => {
       try {
         const { roomCode, playerId } = data;
         if (!roomCode || !playerId) return;
@@ -213,11 +219,6 @@ export function setupSocketHandlers(io: Server) {
           orderBy: { index: 'desc' },
         });
         if (!round) return;
-        
-        const parlay = await prisma.parlay.findFirst({
-          where: { roundId: round.id, playerId },
-        });
-        if (!parlay) return;
         
         const recentVote = await prisma.vote.findFirst({
           where: { roundId: round.id, playerId },
@@ -236,7 +237,7 @@ export function setupSocketHandlers(io: Server) {
           data: {
             roundId: round.id,
             playerId,
-            normalizedText: parlay.normalizedText,
+            normalizedText,
             tVideoSec: correctedTime,
           },
         });
@@ -382,9 +383,12 @@ export function setupSocketHandlers(io: Server) {
         io.to(`room:${roomCode}`).emit('event:confirmed', { event });
         io.to(`room:${roomCode}`).emit('scoreboard:update', { scores: scoreUpdates });
         
+        const settings = room.settings as any as RoomSettings;
+        const pauseDuration = (settings.pauseDurationSec || 20) * 1000;
+        
         setTimeout(() => {
           io.to(`room:${roomCode}`).emit('video:resume');
-        }, 3000);
+        }, pauseDuration);
       } catch (error) {
         console.error('Error confirming event:', error);
         socket.emit('error', { message: 'Failed to confirm event' });

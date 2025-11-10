@@ -7,6 +7,7 @@ export interface ServerToClientEvents {
   'round:status': (data: { status: string }) => void;
   'parlay:progress': (data: { playerId: string; submitted: boolean }) => void;
   'parlay:locked': () => void;
+  'parlay:all': (data: { parlays: Parlay[] }) => void;
   'video:play': () => void;
   'video:pause': () => void;
   'video:pause_auto': (data: { tCenter: number; normalizedText: string; voters: string[] }) => void;
@@ -31,7 +32,7 @@ export interface ClientToServerEvents {
   'host:startRound': (data: { videoType: string; videoUrl?: string; videoId?: string }) => void;
   'parlay:submit': (data: { text: string }) => void;
   'parlay:lock': () => void;
-  'vote:add': (data: { tVideoSec: number }) => void;
+  'vote:add': (data: { tVideoSec: number; normalizedText: string }) => void;
   'host:confirmEvent': (data: { tCenter: number; normalizedText: string }) => void;
   'host:dismissEvent': (data: { tCenter: number; normalizedText: string }) => void;
   'host:mark': (data: { tVideoSec: number; note?: string }) => void;
