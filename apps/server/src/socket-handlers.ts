@@ -40,7 +40,7 @@ export function setupSocketHandlers(io: Server) {
               code: roomCode,
               hostId: 'temp',
               status: 'lobby',
-              settings: DEFAULT_ROOM_SETTINGS,
+              settings: DEFAULT_ROOM_SETTINGS as any,
             },
           });
           room = newRoom;
@@ -248,7 +248,7 @@ export function setupSocketHandlers(io: Server) {
         });
         
         const players = await prisma.player.findMany({ where: { roomId: room.id } });
-        const settings = room.settings as RoomSettings;
+        const settings = room.settings as any as RoomSettings;
         
         if (players.length === 2) {
           const cluster = checkTwoPlayerConsensus(
@@ -302,7 +302,7 @@ export function setupSocketHandlers(io: Server) {
           where: { roundId: round.id, normalizedText },
         });
         
-        const settings = room.settings as RoomSettings;
+        const settings = room.settings as any as RoomSettings;
         const awardedPlayerIds: string[] = [];
         const scoreUpdates: any[] = [];
         
@@ -585,7 +585,7 @@ export function setupSocketHandlers(io: Server) {
           where: { roundId: round.id, normalizedText },
         });
         
-        const settings = room.settings as RoomSettings;
+        const settings = room.settings as any as RoomSettings;
         const awardedPlayerIds: string[] = [];
         const scoreUpdates: any[] = [];
         
@@ -757,7 +757,13 @@ export function setupSocketHandlers(io: Server) {
           include: { player: true },
         });
         
-        const loserId = determineLoser(parlays);
+        const loserId = determineLoser(parlays.map(p => ({
+          playerId: p.playerId,
+          scoreFinal: p.scoreFinal,
+          legsHit: p.legsHit,
+          accuracy: p.accuracy,
+          completedAt: p.completedAt || undefined,
+        })));
         if (!loserId) return;
         
         const approvedEntries = await prisma.wheelEntry.findMany({

@@ -129,7 +129,7 @@ if (fs.existsSync(webBuildDir) && process.env.NODE_ENV === 'production') {
       }
       return handle(req, res);
     });
-  }).catch(err => {
+  }).catch((err: any) => {
     console.error('Error starting Next.js:', err);
   });
 } else {
