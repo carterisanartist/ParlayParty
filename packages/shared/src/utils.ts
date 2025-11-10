@@ -55,13 +55,20 @@ export function selectWeightedRandom<T extends { weight: number }>(
 }
 
 export function createCommitSeed(roomId: string, roundId: string, salt: string): string {
-  const crypto = typeof window === 'undefined' ? require('crypto') : null;
+  let crypto: any = null;
+  try {
+    crypto = require('crypto');
+  } catch (e) {
+    // Crypto not available in browser
+  }
+  
   const data = `${roomId}|${roundId}|${salt}|${Date.now()}`;
   
-  if (crypto) {
+  if (crypto && crypto.createHash) {
     return crypto.createHash('sha256').update(data).digest('hex');
   }
   
+  // Fallback hash for browsers
   let hash = 0;
   for (let i = 0; i < data.length; i++) {
     hash = ((hash << 5) - hash) + data.charCodeAt(i);
