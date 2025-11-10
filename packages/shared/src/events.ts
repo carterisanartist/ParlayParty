@@ -11,6 +11,7 @@ export interface ServerToClientEvents {
   'video:play': () => void;
   'video:pause': () => void;
   'video:pause_auto': (data: { tCenter: number; normalizedText: string; voters: string[] }) => void;
+  'vote:verify': (data: { callerId: string; callerName: string; parlayText: string; voteId: string }) => void;
   'video:seek': (data: { tVideoSec: number }) => void;
   'video:resume': () => void;
   'marker:added': (data: { marker: Marker }) => void;
@@ -37,7 +38,8 @@ export interface ClientToServerEvents {
   'host:startFromQueue': () => void;
   'parlay:submit': (data: { text: string }) => void;
   'parlay:lock': () => void;
-  'vote:add': (data: { tVideoSec: number; normalizedText: string }) => void;
+  'vote:add': (data: { tVideoSec: number; normalizedText: string; parlayText: string }) => void;
+  'vote:respond': (data: { voteId: string; agree: boolean }) => void;
   'host:confirmEvent': (data: { tCenter: number; normalizedText: string }) => void;
   'host:dismissEvent': (data: { tCenter: number; normalizedText: string }) => void;
   'host:mark': (data: { tVideoSec: number; note?: string }) => void;

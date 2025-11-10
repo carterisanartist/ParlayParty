@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import YouTube from 'react-youtube';
 import { audioManager } from '@/lib/audio';
+import { VerificationModal } from './VerificationModal';
 import type { Player, Round, Parlay } from '@parlay-party/shared';
 import type { Socket } from 'socket.io-client';
 
@@ -53,10 +54,10 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
     audioManager.playButtonClick();
   };
 
-  const handleSelectParlay = (normalizedText: string) => {
+  const handleSelectParlay = (normalizedText: string, parlayText: string) => {
     const tVideoSec = videoTimeRef.current;
 
-    socket.emit('vote:add', { tVideoSec, normalizedText });
+    socket.emit('vote:add', { tVideoSec, normalizedText, parlayText });
     setLastCallTime(tVideoSec);
     setShowParlayPicker(false);
 
@@ -195,7 +196,7 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
                     key={parlay.id}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSelectParlay(parlay.normalizedText)}
+                    onClick={() => handleSelectParlay(parlay.normalizedText, parlay.text)}
                     className="w-full bg-bg-0 border-2 border-accent-1 rounded-lg p-4 text-left hover:bg-accent-1/10 transition-all"
                   >
                     <p className="text-lg font-semibold text-fg-0">
@@ -220,6 +221,9 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
         <p>{showVideoOnPhone ? 'Video syncs with host' : 'Watch the host screen'}</p>
         <p className="text-xs mt-1">Toggle video above if needed</p>
       </div>
+
+      {/* Verification Modal */}
+      <VerificationModal socket={socket} />
     </div>
   );
 }

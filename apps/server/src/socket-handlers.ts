@@ -398,7 +398,7 @@ export function setupSocketHandlers(io: Server) {
       }
     });
     
-    socket.on('vote:add', async ({ tVideoSec, normalizedText }) => {
+    socket.on('vote:add', async ({ tVideoSec, normalizedText, parlayText }) => {
       try {
         const { roomCode, playerId } = data;
         if (!roomCode || !playerId) return;
@@ -477,6 +477,112 @@ export function setupSocketHandlers(io: Server) {
       }
     });
     
+    socket.on('vote:respond', async ({ voteId, agree }) => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        // Store response in Redis temporarily
+        const key = `vote:${voteId}:responses`;
+        await redis.hset(key, playerId, agree ? 'true' : 'false');
+        await redis.expire(key, 60); // Expire after 1 minute
+        
+        // Get all responses
+        const responses = await redis.hgetall(key);
+        const trueCount = Object.values(responses).filter(v => v === 'true').length;
+        const falseCount = Object.values(responses).filter(v => v === 'false').length;
+        const totalResponses = trueCount + falseCount;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room) return;
+        
+        const allPlayers = await prisma.player.findMany({ where: { roomId: room.id } });
+        const otherPlayersCount = allPlayers.length - 1; // Exclude caller
+        
+        console.log(`Verification responses: ${totalResponses}/${otherPlayersCount} (TRUE: ${trueCount}, FALSE: ${falseCount})`);
+        
+        // Check if we have all responses or majority
+        if (totalResponses >= otherPlayersCount || totalResponses >= Math.ceil(otherPlayersCount / 2)) {
+          const vote = await prisma.vote.findUnique({ where: { id: voteId } });
+          if (!vote) return;
+          
+          const majority = trueCount > falseCount;
+          
+          if (majority) {
+            // Award simple +1 point
+            await prisma.player.update({
+              where: { id: vote.playerId },
+              data: {
+                scoreTotal: {
+                  increment: 1,
+                },
+              },
+            });
+            
+            // Update parlay
+            const parlay = await prisma.parlay.findFirst({
+              where: { roundId: vote.roundId, playerId: vote.playerId },
+            });
+            
+            if (parlay) {
+              await prisma.parlay.update({
+                where: { id: parlay.id },
+                data: {
+                  scoreFinal: { increment: 1 },
+                  legsHit: { increment: 1 },
+                },
+              });
+            }
+            
+            // Create confirmed event
+            await prisma.confirmedEvent.create({
+              data: {
+                roundId: vote.roundId,
+                normalizedText: vote.normalizedText,
+                tVideoSec: vote.tVideoSec,
+                source: 'consensus',
+                awardedTo: [vote.playerId],
+              },
+            });
+            
+            // Broadcast success
+            io.to(`room:${roomCode}`).emit('event:confirmed', { event: { normalizedText: vote.normalizedText } });
+            io.to(`room:${roomCode}`).emit('video:pause_auto', {
+              tCenter: vote.tVideoSec,
+              normalizedText: vote.normalizedText,
+              voters: [vote.playerId],
+            });
+            
+            const caller = await prisma.player.findUnique({ where: { id: vote.playerId } });
+            const settings = room.settings as any as RoomSettings;
+            const pauseDuration = (settings.pauseDurationSec || 20) * 1000;
+            
+            setTimeout(() => {
+              io.to(`room:${roomCode}`).emit('video:resume');
+            }, pauseDuration);
+            
+          } else {
+            // Majority said FALSE - small penalty
+            await prisma.player.update({
+              where: { id: vote.playerId },
+              data: {
+                scoreTotal: {
+                  decrement: 0.5,
+                },
+              },
+            });
+            
+            console.log(`Event rejected by majority`);
+          }
+          
+          // Clean up
+          await redis.del(key);
+        }
+      } catch (error) {
+        console.error('Error processing verification:', error);
+      }
+    });
+
     socket.on('host:confirmEvent', async ({ tCenter, normalizedText }) => {
       try {
         const { roomCode, playerId } = data;
