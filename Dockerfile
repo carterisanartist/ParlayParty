@@ -3,8 +3,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install pnpm and prisma globally
-RUN npm install -g pnpm@8 prisma
+# Install pnpm and prisma globally  
+RUN npm install -g pnpm@latest prisma
 
 # Copy workspace files
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./

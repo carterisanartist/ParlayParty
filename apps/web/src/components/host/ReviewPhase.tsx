@@ -19,7 +19,7 @@ export function ReviewPhase({ socket, round, players }: ReviewPhaseProps) {
   const [parlayText, setParlayText] = useState('');
 
   useEffect(() => {
-    socket.emit('review:list', (response) => {
+    socket.emit('review:list', (response: { markers: Marker[] }) => {
       setMarkers(response.markers);
     });
 

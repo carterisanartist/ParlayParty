@@ -1,28 +1,28 @@
-import * as Tone from 'tone';
+import { start, Synth, NoiseSynth, Player, Loop, Transport, MembraneSynth, MetalSynth } from 'tone';
 
 class AudioManager {
   private initialized = false;
-  private lobbyPlayer: Tone.Player | null = null;
-  private sfxSynth: Tone.Synth | null = null;
-  private noiseSynth: Tone.NoiseSynth | null = null;
+  private lobbyPlayer: Player | null = null;
+  private sfxSynth: Synth | null = null;
+  private noiseSynth: NoiseSynth | null = null;
 
   async initialize() {
     if (this.initialized) return;
 
-    await Tone.start();
+    await start();
     console.log('Tone.js audio initialized');
 
-    this.sfxSynth = new Tone.Synth({
+    this.sfxSynth = new Synth({
       oscillator: { type: 'sine' },
       envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 },
     }).toDestination();
 
-    this.noiseSynth = new Tone.NoiseSynth({
+    this.noiseSynth = new NoiseSynth({
       noise: { type: 'white' },
       envelope: { attack: 0.001, decay: 0.1, sustain: 0 },
     }).toDestination();
 
-    this.lobbyPlayer = new Tone.Player().toDestination();
+    this.lobbyPlayer = new Player().toDestination();
     this.lobbyPlayer.loop = true;
     this.lobbyPlayer.volume.value = -20;
 
@@ -32,25 +32,25 @@ class AudioManager {
   playLobbyLoop() {
     if (!this.initialized || !this.lobbyPlayer) return;
     
-    const lofiMelody = new Tone.Synth({
+    const lofiMelody = new Synth({
       oscillator: { type: 'triangle' },
       envelope: { attack: 0.1, decay: 0.2, sustain: 0.3, release: 0.8 },
     }).toDestination();
     
     lofiMelody.volume.value = -25;
     
-    const loop = new Tone.Loop((time) => {
+    const loop = new Loop((time) => {
       const notes = ['C4', 'E4', 'G4', 'A4', 'G4', 'E4'];
       const randomNote = notes[Math.floor(Math.random() * notes.length)];
       lofiMelody.triggerAttackRelease(randomNote, '8n', time);
     }, '4n');
     
     loop.start(0);
-    Tone.Transport.start();
+    Transport.start();
   }
 
   stopLobbyLoop() {
-    Tone.Transport.stop();
+    Transport.stop();
   }
 
   playLockIn() {
@@ -60,7 +60,7 @@ class AudioManager {
 
   playPauseBoom() {
     if (!this.initialized || !this.noiseSynth) return;
-    const bassSynth = new Tone.MembraneSynth().toDestination();
+    const bassSynth = new MembraneSynth().toDestination();
     bassSynth.volume.value = -5;
     bassSynth.triggerAttackRelease('C1', '0.3');
     
@@ -81,7 +81,7 @@ class AudioManager {
 
   playWheelCrash() {
     if (!this.initialized) return;
-    const crash = new Tone.MetalSynth().toDestination();
+    const crash = new MetalSynth().toDestination();
     crash.volume.value = -10;
     crash.triggerAttackRelease('0.3');
   }
