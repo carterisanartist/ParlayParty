@@ -25,11 +25,28 @@ export interface ServerToClientEvents {
   'wheel:complete': () => void;
   'player:joined': (data: { player: Player }) => void;
   'error': (data: { message: string }) => void;
+  'queue:updated': (data: { videos: VideoQueueItem[] }) => void;
+}
+
+export interface VideoQueueItem {
+  id: string;
+  roomId: string;
+  videoType: string;
+  videoId?: string;
+  videoUrl?: string;
+  title?: string;
+  addedBy: string;
+  order: number;
+  createdAt: Date;
 }
 
 export interface ClientToServerEvents {
   'player:join': (data: { name: string; avatarUrl?: string }, callback: (response: { player: Player; room: Room; round?: Round }) => void) => void;
+  'queue:add': (data: { videoType: string; videoUrl?: string; videoId?: string; title?: string }) => void;
+  'queue:reorder': (data: { videoId: string; newOrder: number }) => void;
+  'queue:remove': (data: { videoId: string }) => void;
   'host:startRound': (data: { videoType: string; videoUrl?: string; videoId?: string }) => void;
+  'host:startFromQueue': () => void;
   'parlay:submit': (data: { text: string }) => void;
   'parlay:lock': () => void;
   'vote:add': (data: { tVideoSec: number; normalizedText: string }) => void;

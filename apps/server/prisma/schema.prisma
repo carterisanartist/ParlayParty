@@ -15,8 +15,9 @@ model Room {
   settings  Json
   createdAt DateTime @default(now())
 
-  players  Player[]
-  rounds   Round[]
+  players     Player[]
+  rounds      Round[]
+  videoQueue  VideoQueue[]
 
   @@index([code])
   @@index([hostId])
@@ -63,6 +64,23 @@ model Round {
 
   @@index([roomId])
   @@index([roomId, index])
+}
+
+model VideoQueue {
+  id          String   @id @default(cuid())
+  roomId      String
+  videoType   String
+  videoId     String?
+  videoUrl    String?
+  title       String?
+  addedBy     String
+  order       Int
+  createdAt   DateTime @default(now())
+
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([roomId, order])
 }
 
 model Parlay {

@@ -59,6 +59,18 @@ export interface Round {
   createdAt: Date;
 }
 
+export interface VideoQueueItem {
+  id: string;
+  roomId: string;
+  videoType: VideoType;
+  videoId?: string;
+  videoUrl?: string;
+  title?: string;
+  addedBy: string;
+  order: number;
+  createdAt: Date;
+}
+
 export interface Parlay {
   id: string;
   roundId: string;

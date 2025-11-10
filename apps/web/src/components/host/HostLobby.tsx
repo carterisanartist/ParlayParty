@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlayerAvatar } from '../PlayerAvatar';
+import { VideoQueue } from './VideoQueue';
 import type { Player } from '@parlay-party/shared';
 import type { Socket } from 'socket.io-client';
 
@@ -20,24 +21,8 @@ export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobb
   const [uploading, setUploading] = useState(false);
 
   const handleStartRound = async () => {
-    if (videoType === 'upload' && uploadFile) {
-      await handleUpload();
-      return;
-    }
-    
-    if (!videoUrl && videoType !== 'upload') return;
-
-    let videoId = '';
-    if (videoType === 'youtube') {
-      const match = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-      videoId = match ? match[1] : '';
-    }
-
-    socket.emit('host:startRound', {
-      videoType,
-      videoUrl: videoType === 'youtube' ? undefined : videoUrl,
-      videoId: videoType === 'youtube' ? videoId : undefined,
-    });
+    // Start from queue (first video)
+    socket.emit('host:startFromQueue');
   };
 
   const handleUpload = async () => {
@@ -91,6 +76,8 @@ export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobb
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
+        <VideoQueue socket={socket} roomCode={roomCode} playerId={currentPlayer.id} />
+        
         <div className="card-neon p-8 space-y-6">
           <h2 className="font-display text-3xl glow-violet tracking-wider">
             PLAYERS ({players.length})
@@ -127,88 +114,19 @@ export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobb
           )}
         </div>
 
-        <div className="card-neon p-8 space-y-6">
-          <h2 className="font-display text-3xl glow-violet tracking-wider">
-            START GAME
-          </h2>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-fg-subtle">
-                VIDEO SOURCE
-              </label>
-              <div className="flex gap-2">
-                {(['youtube', 'tiktok', 'upload'] as const).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setVideoType(type)}
-                    className={`
-                      flex-1 py-2 px-4 rounded-lg font-semibold transition-all
-                      ${videoType === type ? 'btn-neon-pink' : 'bg-bg-0 text-fg-subtle'}
-                    `}
-                  >
-                    {type.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {videoType !== 'upload' && (
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-fg-subtle">
-                  VIDEO URL
-                </label>
-                <input
-                  type="text"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="Paste YouTube or TikTok URL..."
-                  className="input-neon"
-                />
-              </div>
-            )}
-
-            {videoType === 'upload' && (
-              <div className="border-2 border-dashed border-accent-1 rounded-lg p-8 text-center space-y-4">
-                <p className="text-fg-subtle">Upload video file (max 500MB)</p>
-                <input
-                  type="file"
-                  accept="video/mp4,video/webm,video/ogg,video/mov"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setUploadFile(file);
-                    }
-                  }}
-                  className="hidden"
-                  id="video-upload"
-                />
-                <label
-                  htmlFor="video-upload"
-                  className="btn-neon cursor-pointer inline-block"
-                >
-                  CHOOSE FILE
-                </label>
-                {uploadFile && (
-                  <div className="mt-4 p-4 bg-bg-0 rounded-lg">
-                    <p className="text-accent-1 font-semibold">✓ {uploadFile.name}</p>
-                    <p className="text-sm text-fg-subtle">
-                      {(uploadFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
+        <div className="space-y-6">
+          <div className="text-center">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleStartRound}
-              disabled={(videoType !== 'upload' && !videoUrl) || (videoType === 'upload' && !uploadFile) || uploading}
-              className="w-full btn-neon-pink py-4 text-2xl font-display tracking-widest disabled:opacity-50"
+              className="btn-neon-pink py-6 px-12 text-3xl font-display tracking-widest"
             >
-              {uploading ? 'UPLOADING...' : 'START ROUND'}
+              START GAME
             </motion.button>
+            <p className="text-fg-subtle mt-3">
+              Will play videos in queue order
+            </p>
           </div>
         </div>
       </div>

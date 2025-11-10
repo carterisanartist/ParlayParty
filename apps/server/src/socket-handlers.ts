@@ -86,6 +86,187 @@ export function setupSocketHandlers(io: Server) {
       }
     });
     
+    socket.on('queue:add', async ({ videoType, videoUrl, videoId, title }) => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room) return;
+        
+        const player = await prisma.player.findUnique({ where: { id: playerId } });
+        if (!player) return;
+        
+        const maxOrder = await prisma.videoQueue.findFirst({
+          where: { roomId: room.id },
+          orderBy: { order: 'desc' },
+        });
+        
+        await prisma.videoQueue.create({
+          data: {
+            roomId: room.id,
+            videoType,
+            videoId,
+            videoUrl,
+            title,
+            addedBy: player.name,
+            order: (maxOrder?.order || -1) + 1,
+          },
+        });
+        
+        const allVideos = await prisma.videoQueue.findMany({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        io.to(`room:${roomCode}`).emit('queue:updated', { videos: allVideos });
+      } catch (error) {
+        console.error('Error adding to queue:', error);
+        socket.emit('error', { message: 'Failed to add video' });
+      }
+    });
+
+    socket.on('queue:reorder', async ({ videoId, newOrder }) => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room) return;
+        
+        const video = await prisma.videoQueue.findUnique({ where: { id: videoId } });
+        if (!video || video.roomId !== room.id) return;
+        
+        const allVideos = await prisma.videoQueue.findMany({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        const oldOrder = video.order;
+        const updatedVideos = allVideos.map(v => {
+          if (v.id === videoId) {
+            return { ...v, order: newOrder };
+          }
+          if (oldOrder < newOrder) {
+            if (v.order > oldOrder && v.order <= newOrder) {
+              return { ...v, order: v.order - 1 };
+            }
+          } else {
+            if (v.order >= newOrder && v.order < oldOrder) {
+              return { ...v, order: v.order + 1 };
+            }
+          }
+          return v;
+        });
+        
+        for (const v of updatedVideos) {
+          await prisma.videoQueue.update({
+            where: { id: v.id },
+            data: { order: v.order },
+          });
+        }
+        
+        const finalVideos = await prisma.videoQueue.findMany({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        io.to(`room:${roomCode}`).emit('queue:updated', { videos: finalVideos });
+      } catch (error) {
+        console.error('Error reordering queue:', error);
+      }
+    });
+
+    socket.on('queue:remove', async ({ videoId }) => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room) return;
+        
+        await prisma.videoQueue.delete({ where: { id: videoId } });
+        
+        const remaining = await prisma.videoQueue.findMany({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        for (let i = 0; i < remaining.length; i++) {
+          await prisma.videoQueue.update({
+            where: { id: remaining[i].id },
+            data: { order: i },
+          });
+        }
+        
+        const allVideos = await prisma.videoQueue.findMany({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        io.to(`room:${roomCode}`).emit('queue:updated', { videos: allVideos });
+      } catch (error) {
+        console.error('Error removing from queue:', error);
+      }
+    });
+
+    socket.on('host:startFromQueue', async () => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room || room.hostId !== playerId) return;
+        
+        const nextVideo = await prisma.videoQueue.findFirst({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        if (!nextVideo) {
+          socket.emit('error', { message: 'No videos in queue' });
+          return;
+        }
+        
+        const lastRound = await prisma.round.findFirst({
+          where: { roomId: room.id },
+          orderBy: { index: 'desc' },
+        });
+        
+        const newIndex = (lastRound?.index || 0) + 1;
+        
+        const round = await prisma.round.create({
+          data: {
+            roomId: room.id,
+            index: newIndex,
+            videoType: nextVideo.videoType,
+            videoId: nextVideo.videoId,
+            videoUrl: nextVideo.videoUrl,
+            status: 'parlay',
+          },
+        });
+        
+        await prisma.room.update({
+          where: { id: room.id },
+          data: { status: 'parlay' },
+        });
+        
+        await prisma.videoQueue.delete({ where: { id: nextVideo.id } });
+        
+        const remaining = await prisma.videoQueue.findMany({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        io.to(`room:${roomCode}`).emit('round:started', { round });
+        io.to(`room:${roomCode}`).emit('round:status', { status: 'parlay' });
+        io.to(`room:${roomCode}`).emit('queue:updated', { videos: remaining });
+      } catch (error) {
+        console.error('Error starting from queue:', error);
+        socket.emit('error', { message: 'Failed to start round' });
+      }
+    });
+
     socket.on('host:startRound', async ({ videoType, videoUrl, videoId }) => {
       try {
         const { roomCode, playerId } = data;
