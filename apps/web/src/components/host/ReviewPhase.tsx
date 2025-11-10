@@ -88,7 +88,7 @@ export function ReviewPhase({ socket, round, players }: ReviewPhaseProps) {
                     controls: 1,
                   },
                 }}
-                onReady={(e) => setPlayer(e.target)}
+                onReady={(e: any) => setPlayer(e.target)}
                 className="w-full h-full"
               />
             </div>
