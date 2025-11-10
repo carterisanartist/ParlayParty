@@ -15,6 +15,7 @@ interface PlayerParlayProps {
 export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
   const [parlayText, setParlayText] = useState('');
   const [isLocked, setIsLocked] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const examplePredictions = [
     'Someone screams',
@@ -27,11 +28,16 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
   const randomExample = examplePredictions[Math.floor(Math.random() * examplePredictions.length)];
 
   const handleLockIn = () => {
-    if (!parlayText.trim()) return;
+    if (!parlayText.trim() || isSubmitting) return;
 
+    setIsSubmitting(true);
     socket.emit('parlay:submit', { text: parlayText.trim() });
-    setIsLocked(true);
-    audioManager.playLockIn();
+    
+    setTimeout(() => {
+      setIsLocked(true);
+      setIsSubmitting(false);
+      audioManager.playLockIn();
+    }, 500);
   };
 
   return (
@@ -74,15 +80,15 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
             </p>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleLockIn}
-            disabled={!parlayText.trim()}
-            className="w-full btn-neon-pink py-5 text-2xl font-display tracking-widest disabled:opacity-50"
-          >
-            🔒 LOCK IN
-          </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLockIn}
+              disabled={!parlayText.trim() || isSubmitting}
+              className="w-full btn-neon-pink py-5 text-2xl font-display tracking-widest disabled:opacity-50"
+            >
+              {isSubmitting ? 'LOCKING...' : '🔒 LOCK IN'}
+            </motion.button>
         </motion.div>
       ) : (
         <motion.div

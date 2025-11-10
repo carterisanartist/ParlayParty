@@ -60,7 +60,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
 app.get('/media/:roundId/:filename', async (req, res) => {
   try {
     const { roundId, filename } = req.params;
-    const uploadsDir = process.env.UPLOADS_DIR || '/data/uploads';
+    const uploadsDir = process.env.UPLOADS_DIR || (process.env.NODE_ENV === 'production' ? '/data/uploads' : './uploads');
     const filePath = path.join(uploadsDir, roundId, filename);
     
     if (!fs.existsSync(filePath)) {
@@ -110,22 +110,39 @@ io.use((socket, next) => {
 
 setupSocketHandlers(io);
 
-const nextDir = path.join(__dirname, '.next');
-if (fs.existsSync(nextDir)) {
-  const nextHandler = require('next/dist/server/next').default;
-  const nextApp = nextHandler({
+const webBuildDir = path.resolve(__dirname, '../../web/.next');
+const webPublicDir = path.resolve(__dirname, '../../web/public');
+
+if (fs.existsSync(webBuildDir) && process.env.NODE_ENV === 'production') {
+  console.log('Serving Next.js production build');
+  const next = require('next');
+  const nextApp = next({
     dev: false,
-    dir: path.join(__dirname, '..'),
+    dir: path.resolve(__dirname, '../../web'),
   });
   
   nextApp.prepare().then(() => {
+    const handle = nextApp.getRequestHandler();
     app.all('*', (req, res) => {
-      return nextApp.getRequestHandler()(req, res);
+      if (req.path.startsWith('/media/') || req.path.startsWith('/upload') || req.path.startsWith('/healthz')) {
+        return;
+      }
+      return handle(req, res);
     });
+  }).catch(err => {
+    console.error('Error starting Next.js:', err);
   });
 } else {
+  console.log('Next.js not available - API only mode');
   app.get('*', (req, res) => {
-    res.json({ message: 'Parlay Party API - Next.js app not built yet' });
+    res.json({ 
+      message: 'Parlay Party API',
+      endpoints: {
+        healthz: '/healthz',
+        upload: 'POST /upload',
+        media: '/media/:roundId/:filename'
+      }
+    });
   });
 }
 

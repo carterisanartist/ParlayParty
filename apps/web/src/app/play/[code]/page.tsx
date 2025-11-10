@@ -115,6 +115,15 @@ export default function PlayerPage() {
         />
       )}
       
+      {status === 'review' && (
+        <div className="max-w-md mx-auto text-center py-12 space-y-6">
+          <h1 className="font-display text-6xl glow-violet">REVIEW</h1>
+          <div className="card-neon p-8">
+            <p className="text-fg-subtle">Host is reviewing marked moments...</p>
+          </div>
+        </div>
+      )}
+      
       {status === 'wheel' && currentRound && (
         <PlayerWheel
           socket={socket}

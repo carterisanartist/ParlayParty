@@ -306,13 +306,30 @@ export function setupSocketHandlers(io: Server) {
         const awardedPlayerIds: string[] = [];
         const scoreUpdates: any[] = [];
         
+        const allVotes = await prisma.vote.findMany({
+          where: {
+            roundId: round.id,
+            normalizedText,
+            tVideoSec: {
+              gte: tCenter - settings.voteWindowSec,
+              lte: tCenter + settings.voteWindowSec,
+            },
+          },
+        });
+        
+        const voteTimes = allVotes.map(v => v.tVideoSec);
+        const medianTime = voteTimes.sort((a, b) => a - b)[Math.floor(voteTimes.length / 2)] || tCenter;
+        
         for (const parlay of matchingParlays) {
+          const playerVote = allVotes.find(v => v.playerId === parlay.playerId);
+          const fastTap = playerVote ? Math.abs(playerVote.tVideoSec - medianTime) <= settings.fastTapWindow : false;
+          
           const scoreCalc = await calculateEventScore(
             round.id,
             normalizedText,
             parlay.playerId,
             settings.scoreMultiplier,
-            false
+            fastTap
           );
           
           const newScoreFinal = parlay.scoreFinal + scoreCalc.totalScore;
@@ -521,6 +538,122 @@ export function setupSocketHandlers(io: Server) {
       } catch (error) {
         console.error('Error ending round:', error);
         socket.emit('error', { message: 'Failed to end round' });
+      }
+    });
+
+    socket.on('review:list', async (callback) => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room || room.hostId !== playerId) return;
+        
+        const round = await prisma.round.findFirst({
+          where: { roomId: room.id },
+          orderBy: { index: 'desc' },
+        });
+        if (!round) return callback({ markers: [] });
+        
+        const markers = await prisma.marker.findMany({
+          where: { roundId: round.id },
+          orderBy: { tVideoSec: 'asc' },
+        });
+        
+        callback({ markers });
+      } catch (error) {
+        console.error('Error fetching markers:', error);
+        callback({ markers: [] });
+      }
+    });
+
+    socket.on('review:confirm', async ({ markerId, tVideoSec, normalizedText }) => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room || room.hostId !== playerId) return;
+        
+        const round = await prisma.round.findFirst({
+          where: { roomId: room.id },
+          orderBy: { index: 'desc' },
+        });
+        if (!round) return;
+        
+        const matchingParlays = await prisma.parlay.findMany({
+          where: { roundId: round.id, normalizedText },
+        });
+        
+        const settings = room.settings as RoomSettings;
+        const awardedPlayerIds: string[] = [];
+        const scoreUpdates: any[] = [];
+        
+        for (const parlay of matchingParlays) {
+          const scoreCalc = await calculateEventScore(
+            round.id,
+            normalizedText,
+            parlay.playerId,
+            settings.scoreMultiplier,
+            false
+          );
+          
+          const newScoreFinal = parlay.scoreFinal + scoreCalc.totalScore;
+          const newLegsHit = parlay.legsHit + 1;
+          
+          await prisma.parlay.update({
+            where: { id: parlay.id },
+            data: {
+              scoreFinal: newScoreFinal,
+              legsHit: newLegsHit,
+              completedAt: new Date(),
+            },
+          });
+          
+          await prisma.player.update({
+            where: { id: parlay.playerId },
+            data: {
+              scoreTotal: {
+                increment: scoreCalc.totalScore,
+              },
+            },
+          });
+          
+          awardedPlayerIds.push(parlay.playerId);
+          scoreUpdates.push({
+            playerId: parlay.playerId,
+            parlayId: parlay.id,
+            delta: scoreCalc.totalScore,
+            newTotal: 0,
+            reason: 'review_confirmed',
+          });
+        }
+        
+        const event = await prisma.confirmedEvent.create({
+          data: {
+            roundId: round.id,
+            normalizedText,
+            tVideoSec: tVideoSec || 0,
+            source: 'host_review',
+            awardedTo: awardedPlayerIds,
+          },
+        });
+        
+        const updatedPlayers = await prisma.player.findMany({ where: { roomId: room.id } });
+        for (const update of scoreUpdates) {
+          const player = updatedPlayers.find(p => p.id === update.playerId);
+          if (player) update.newTotal = player.scoreTotal;
+        }
+        
+        if (markerId) {
+          await prisma.marker.delete({ where: { id: markerId } });
+        }
+        
+        io.to(`room:${roomCode}`).emit('event:confirmed', { event });
+        io.to(`room:${roomCode}`).emit('scoreboard:update', { scores: scoreUpdates });
+      } catch (error) {
+        console.error('Error confirming review:', error);
+        socket.emit('error', { message: 'Failed to confirm review' });
       }
     });
 

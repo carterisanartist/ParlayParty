@@ -20,6 +20,30 @@ export function WheelPhase({ socket, round, players }: WheelPhaseProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
 
+  const animateWheel = () => {
+    if (!appRef.current) return;
+
+    let rotation = 0;
+    let speed = 0.5;
+    const deceleration = 0.98;
+
+    const animate = () => {
+      rotation += speed;
+      speed *= deceleration;
+
+      if (appRef.current && appRef.current.stage.children[0]) {
+        appRef.current.stage.children[0].rotation = rotation;
+      }
+
+      if (speed > 0.01) {
+        audioManager.playWheelTick();
+        requestAnimationFrame(animate);
+      }
+    };
+
+    animate();
+  };
+
   useEffect(() => {
     socket.on('wheel:entry_added', ({ entry }) => {
       setEntries((prev) => [...prev, entry]);
@@ -92,30 +116,6 @@ export function WheelPhase({ socket, round, players }: WheelPhaseProps) {
     });
 
     app.stage.addChild(wheel);
-  };
-
-  const animateWheel = () => {
-    if (!appRef.current) return;
-
-    let rotation = 0;
-    let speed = 0.5;
-    const deceleration = 0.98;
-
-    const animate = () => {
-      rotation += speed;
-      speed *= deceleration;
-
-      if (appRef.current && appRef.current.stage.children[0]) {
-        appRef.current.stage.children[0].rotation = rotation;
-      }
-
-      if (speed > 0.01) {
-        audioManager.playWheelTick();
-        requestAnimationFrame(animate);
-      }
-    };
-
-    animate();
   };
 
   const handleSpin = () => {

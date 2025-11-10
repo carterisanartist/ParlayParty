@@ -2,7 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-const uploadsDir = process.env.UPLOADS_DIR || './uploads';
+const uploadsDir = process.env.UPLOADS_DIR || (process.env.NODE_ENV === 'production' ? '/data/uploads' : './uploads');
 
 // Ensure uploads directory exists
 if (!fs.existsSync(uploadsDir)) {
