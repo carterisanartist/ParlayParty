@@ -14,8 +14,10 @@ interface VideoQueueProps {
 export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
   const [videos, setVideos] = useState<VideoQueueItem[]>([]);
   const [videoUrl, setVideoUrl] = useState('');
-  const [videoType, setVideoType] = useState<'youtube' | 'tiktok'>('youtube');
+  const [videoType, setVideoType] = useState<'youtube' | 'tiktok' | 'upload'>('youtube');
   const [title, setTitle] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     socket.on('queue:updated', ({ videos: updatedVideos }) => {
@@ -28,6 +30,11 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
   }, [socket]);
 
   const handleAddVideo = async () => {
+    if (videoType === 'upload') {
+      await handleUpload();
+      return;
+    }
+    
     if (!videoUrl.trim()) return;
 
     let videoId = '';
@@ -64,6 +71,41 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
     setTitle('');
   };
 
+  const handleUpload = async () => {
+    if (!uploadFile) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('video', uploadFile);
+    formData.append('roundId', 'queue');
+
+    try {
+      const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080';
+      const response = await fetch(`${serverUrl}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        socket.emit('queue:add', {
+          videoType: 'upload',
+          videoUrl: `${serverUrl}${data.videoUrl}`,
+          title: title.trim() || uploadFile.name,
+        });
+        
+        setUploadFile(null);
+        setTitle('');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload video');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleMoveUp = (video: VideoQueueItem) => {
     if (video.order === 0) return;
     socket.emit('queue:reorder', { videoId: video.id, newOrder: video.order - 1 });
@@ -87,12 +129,12 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
       {/* Add Video Form */}
       <div className="space-y-4 border-t border-fg-subtle/20 pt-6">
         <div className="flex gap-2">
-          {(['youtube', 'tiktok'] as const).map((type) => (
+          {(['youtube', 'tiktok', 'upload'] as const).map((type) => (
             <button
               key={type}
               onClick={() => setVideoType(type)}
               className={`
-                flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm
+                flex-1 py-2 px-3 rounded-lg font-semibold transition-all text-xs
                 ${videoType === type ? 'btn-neon-pink' : 'bg-bg-0 text-fg-subtle'}
               `}
             >
@@ -109,22 +151,48 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
           className="input-neon text-sm"
         />
 
-        <input
-          type="text"
-          value={videoUrl}
-          onChange={(e) => setVideoUrl(e.target.value)}
-          placeholder="Paste video URL..."
-          className="input-neon"
-        />
+        {videoType !== 'upload' ? (
+          <input
+            type="text"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="Paste video URL..."
+            className="input-neon"
+          />
+        ) : (
+          <div className="border-2 border-dashed border-accent-1 rounded-lg p-4 text-center">
+            <input
+              type="file"
+              accept="video/mp4,video/webm,video/ogg,video/mov"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setUploadFile(file);
+              }}
+              className="hidden"
+              id="queue-video-upload"
+            />
+            <label
+              htmlFor="queue-video-upload"
+              className="cursor-pointer text-sm text-accent-1 hover:text-accent-2"
+            >
+              {uploadFile ? uploadFile.name : '📁 Choose Video File'}
+            </label>
+            {uploadFile && (
+              <p className="text-xs text-fg-subtle mt-1">
+                {(uploadFile.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            )}
+          </div>
+        )}
 
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleAddVideo}
-          disabled={!videoUrl.trim()}
+          disabled={(videoType !== 'upload' && !videoUrl.trim()) || (videoType === 'upload' && !uploadFile) || uploading}
           className="w-full btn-neon py-3 text-lg font-display tracking-widest disabled:opacity-50"
         >
-          + ADD TO QUEUE
+          {uploading ? 'UPLOADING...' : '+ ADD TO QUEUE'}
         </motion.button>
       </div>
 

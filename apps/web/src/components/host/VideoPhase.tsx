@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { CinematicPause } from '../CinematicPause';
 import { Scoreboard } from '../Scoreboard';
 import { EventLog } from './EventLog';
+import { LiveScoreboard } from './LiveScoreboard';
 import type { Player, Round } from '@parlay-party/shared';
 import type { Socket } from 'socket.io-client';
 
@@ -28,6 +29,8 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   const [eventCount, setEventCount] = useState(0);
   const [videoEnded, setVideoEnded] = useState(false);
   const [markers, setMarkers] = useState<any[]>([]);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     socket.on('video:pause_auto', ({ tCenter, normalizedText, voters }) => {
@@ -94,8 +97,11 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
     if (!player) return;
 
     const interval = setInterval(() => {
-      const currentTime = player.getCurrentTime();
-      socket.emit('host:sync', { tVideoSec: currentTime });
+      const time = player.getCurrentTime();
+      const dur = player.getDuration();
+      setCurrentTime(time);
+      setDuration(dur);
+      socket.emit('host:sync', { tVideoSec: time });
     }, 1000);
 
     return () => clearInterval(interval);
@@ -150,7 +156,10 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
         </div>
       )}
       
-      <div className="relative">
+      <div className="grid lg:grid-cols-4 gap-6">
+        {/* Video Player - 3 columns */}
+        <div className="lg:col-span-3 space-y-4">
+          <div className="relative">
         {round.videoType === 'youtube' && round.videoId && (
           <div className="aspect-video bg-black rounded-xl overflow-hidden">
             <YouTube
@@ -196,10 +205,10 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
           </div>
         )}
         
-        {/* Event Log Below Video */}
-        <EventLog socket={socket} />
+          {/* Event Log Below Video */}
+          <EventLog socket={socket} />
 
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
+          <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
           <div className="space-y-2 pointer-events-auto">
             <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border">
               <p className="text-sm text-fg-subtle mb-1">EVENTS</p>
@@ -209,6 +218,20 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
               <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border-violet">
                 <p className="text-sm text-fg-subtle mb-1">MARKERS</p>
                 <p className="text-2xl font-mono font-bold text-accent-3">{markers.length}</p>
+              </div>
+            )}
+            {duration > 0 && (
+              <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border-pink">
+                <p className="text-sm text-fg-subtle mb-1">TIME</p>
+                <p className="text-xl font-mono font-bold text-accent-2">
+                  {Math.floor(currentTime)}s / {Math.floor(duration)}s
+                </p>
+                <div className="mt-2 h-1 bg-bg-0 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent-2"
+                    style={{ width: `${(currentTime / duration) * 100}%` }}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -238,6 +261,13 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
               📍 MARK
             </button>
           </div>
+        </div>
+          </div>
+        </div>
+
+        {/* Live Scoreboard - 1 column */}
+        <div className="lg:col-span-1">
+          <LiveScoreboard socket={socket} players={players} />
         </div>
       </div>
 
