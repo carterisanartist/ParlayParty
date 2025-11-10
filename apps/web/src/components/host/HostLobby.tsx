@@ -80,11 +80,11 @@ export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobb
         
         <div className="card-neon p-8 space-y-6">
           <h2 className="font-display text-3xl glow-violet tracking-wider">
-            PLAYERS ({players.length})
+            PLAYERS ({players.filter(p => !p.isHost).length})
           </h2>
           
           <div className="space-y-3">
-            {players.map((player) => (
+            {players.filter(p => !p.isHost).map((player) => (
               <motion.div
                 key={player.id}
                 initial={{ x: -20, opacity: 0 }}
@@ -100,14 +100,11 @@ export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobb
                     </p>
                   )}
                 </div>
-                {player.isHost && (
-                  <span className="text-accent-2 font-semibold">HOST</span>
-                )}
               </motion.div>
             ))}
           </div>
 
-          {players.length === 0 && (
+          {players.filter(p => !p.isHost).length === 0 && (
             <p className="text-center text-fg-subtle py-8">
               Waiting for players to join...
             </p>

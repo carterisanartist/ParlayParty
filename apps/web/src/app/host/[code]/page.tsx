@@ -33,7 +33,7 @@ export default function HostPage() {
       socket.emit('player:join', { name: 'Host' }, (response) => {
         setCurrentPlayer(response.player);
         setRoom(response.room);
-        setPlayers([response.player]);
+        // Don't add host to players list for host view
         if (response.round) setCurrentRound(response.round);
       });
     };

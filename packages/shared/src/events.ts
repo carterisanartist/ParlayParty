@@ -1,4 +1,4 @@
-import { Player, Room, Round, Parlay, Marker, ConfirmedEvent, WheelEntry, PunishmentSpin, ScoreUpdate, VoteCluster } from './types';
+import { Player, Room, Round, Parlay, Marker, ConfirmedEvent, WheelEntry, PunishmentSpin, ScoreUpdate, VoteCluster, VideoQueueItem } from './types';
 
 export interface ServerToClientEvents {
   'roster:update': (data: { players: Player[] }) => void;
