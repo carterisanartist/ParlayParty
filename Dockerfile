@@ -3,8 +3,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install OpenSSL 1.1 compatibility for Prisma
-RUN apk add --no-cache openssl1.1-compat
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl openssl-dev
 
 # Install pnpm and prisma globally  
 RUN npm install -g pnpm@latest prisma
