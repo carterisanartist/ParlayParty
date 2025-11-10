@@ -54,6 +54,7 @@ export interface Round {
   videoType: VideoType;
   videoId?: string;
   videoUrl?: string;
+  videoTitle?: string;
   durationSec?: number;
   status: RoundStatus;
   createdAt: Date;
