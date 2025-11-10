@@ -195,6 +195,9 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
             />
           </div>
         )}
+        
+        {/* Event Log Below Video */}
+        <EventLog socket={socket} />
 
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
           <div className="space-y-2 pointer-events-auto">
