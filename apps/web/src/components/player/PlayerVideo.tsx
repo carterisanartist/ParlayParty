@@ -22,14 +22,22 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
   const videoTimeRef = useRef(0);
 
   useEffect(() => {
+    // Set up listeners FIRST
     socket.on('host:sync', ({ tVideoSec }) => {
       videoTimeRef.current = tVideoSec;
     });
 
     socket.on('parlay:all', ({ parlays }) => {
-      console.log('Received parlays:', parlays);
-      setAllParlays(parlays);
+      console.log('PlayerVideo received parlays:', parlays);
+      if (Array.isArray(parlays)) {
+        setAllParlays(parlays);
+      } else {
+        console.error('Parlays is not an array:', parlays);
+      }
     });
+
+    // Request parlays immediately in case we missed the broadcast
+    socket.emit('player:requestParlays');
 
     return () => {
       socket.off('host:sync');
@@ -37,7 +45,7 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
     };
   }, [socket]);
 
-  console.log('Current parlays in state:', allParlays.length);
+  console.log('Current parlays in PlayerVideo state:', allParlays.length, allParlays);
 
   const handleItHappened = () => {
     if (cooldown) return;

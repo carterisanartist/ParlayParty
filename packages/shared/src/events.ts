@@ -54,5 +54,6 @@ export interface ClientToServerEvents {
   'wheel:spin': () => void;
   'wheel:complete': () => void;
   'ping': (callback: (response: number) => void) => void;
+  'player:requestParlays': () => void;
 }
 

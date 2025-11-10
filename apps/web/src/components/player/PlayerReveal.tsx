@@ -17,10 +17,14 @@ export function PlayerReveal({ socket, round, player }: PlayerRevealProps) {
 
   useEffect(() => {
     socket.on('parlay:all', ({ parlays }) => {
+      console.log('PlayerReveal received parlays:', parlays);
       setAllParlays(parlays);
       const mine = parlays.find((p: Parlay) => p.playerId === player.id);
       setMyParlay(mine || null);
     });
+
+    // Request parlays immediately
+    socket.emit('player:requestParlays');
 
     return () => {
       socket.off('parlay:all');

@@ -1006,6 +1006,39 @@ export function setupSocketHandlers(io: Server) {
       }
     });
     
+    socket.on('player:requestParlays', async () => {
+      try {
+        const { roomCode } = data;
+        if (!roomCode) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room) return;
+        
+        const round = await prisma.round.findFirst({
+          where: { roomId: room.id, status: 'video' },
+          orderBy: { index: 'desc' },
+        });
+        
+        if (!round) return;
+        
+        const allParlays = await prisma.parlay.findMany({
+          where: { roundId: round.id },
+        });
+        
+        const parlaysToSend = allParlays.map(p => ({
+          id: p.id,
+          text: p.text,
+          normalizedText: p.normalizedText,
+          playerId: p.playerId,
+        }));
+        
+        console.log(`Sending ${parlaysToSend.length} parlays to ${socket.id}`);
+        socket.emit('parlay:all', { parlays: parlaysToSend });
+      } catch (error) {
+        console.error('Error fetching parlays:', error);
+      }
+    });
+
     socket.on('ping', (callback) => {
       callback(Date.now());
     });
