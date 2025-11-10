@@ -1,0 +1,46 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import type { Player } from '@parlay-party/shared';
+
+interface PlayerAvatarProps {
+  player: Player;
+  size?: 'sm' | 'md' | 'lg';
+  glow?: boolean;
+}
+
+export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatarProps) {
+  const sizeClasses = {
+    sm: 'w-12 h-12 text-lg',
+    md: 'w-16 h-16 text-2xl',
+    lg: 'w-24 h-24 text-4xl',
+  };
+
+  const glowClass = glow ? 'neon-border' : 'border-2 border-fg-subtle';
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.1 }}
+      className={`${sizeClasses[size]} ${glowClass} rounded-full flex items-center justify-center bg-bg-1 font-bold relative`}
+    >
+      {player.avatarUrl ? (
+        <img
+          src={player.avatarUrl}
+          alt={player.name}
+          className="w-full h-full rounded-full object-cover"
+        />
+      ) : (
+        <span className="text-accent-1">
+          {player.name.charAt(0).toUpperCase()}
+        </span>
+      )}
+      
+      {player.isHost && (
+        <div className="absolute -top-1 -right-1 w-6 h-6 bg-accent-2 rounded-full flex items-center justify-center text-xs">
+          👑
+        </div>
+      )}
+    </motion.div>
+  );
+}
+

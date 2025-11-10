@@ -1,0 +1,33 @@
+{
+  "name": "parlay-party",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real-time party game with dark neon vibes",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @parlay-party/server dev & pnpm --filter @parlay-party/web dev",
+    "build": "pnpm --filter @parlay-party/shared build && pnpm --filter @parlay-party/server build && pnpm --filter @parlay-party/web build",
+    "lint": "pnpm --recursive lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "type-check": "pnpm --recursive type-check",
+    "test": "pnpm --recursive test",
+    "db:migrate": "pnpm --filter @parlay-party/server db:migrate",
+    "db:push": "pnpm --filter @parlay-party/server db:push",
+    "db:seed": "pnpm --filter @parlay-party/server db:seed",
+    "setup": "node scripts/check-platform.js",
+    "validate": "bash scripts/validate.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.3"
+  }
+}
+

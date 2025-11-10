@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-0: #0B0B0B;
+  --bg-1: #121212;
+  --fg-0: #F5F8FF;
+  --fg-subtle: #B6C2E1;
+  --accent-1: #00FFF7;
+  --accent-2: #FF2D95;
+  --accent-3: #8A6BFF;
+  --success: #7FFF00;
+  --danger: #FF4444;
+  --warning: #FFC400;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  background: linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 100%);
+  color: var(--fg-0);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  .glow-cyan {
+    text-shadow: 
+      0 0 10px var(--accent-1),
+      0 0 20px var(--accent-1),
+      0 0 30px var(--accent-1);
+  }
+  
+  .glow-pink {
+    text-shadow: 
+      0 0 10px var(--accent-2),
+      0 0 20px var(--accent-2),
+      0 0 30px var(--accent-2);
+  }
+  
+  .glow-violet {
+    text-shadow: 
+      0 0 10px var(--accent-3),
+      0 0 20px var(--accent-3),
+      0 0 30px var(--accent-3);
+  }
+  
+  .neon-border {
+    border: 1px solid var(--accent-1);
+    box-shadow: 
+      inset 0 0 10px var(--accent-1),
+      0 0 10px var(--accent-1),
+      0 0 20px var(--accent-1);
+  }
+  
+  .neon-border-pink {
+    border: 1px solid var(--accent-2);
+    box-shadow: 
+      inset 0 0 10px var(--accent-2),
+      0 0 10px var(--accent-2),
+      0 0 20px var(--accent-2);
+  }
+  
+  .neon-border-violet {
+    border: 1px solid var(--accent-3);
+    box-shadow: 
+      inset 0 0 10px var(--accent-3),
+      0 0 10px var(--accent-3),
+      0 0 20px var(--accent-3);
+  }
+  
+  .radial-cyan {
+    background: radial-gradient(circle, rgba(0, 255, 247, 0.15) 0%, transparent 70%);
+  }
+  
+  .radial-pink {
+    background: radial-gradient(circle, rgba(255, 45, 149, 0.15) 0%, transparent 70%);
+  }
+  
+  .radial-violet {
+    background: radial-gradient(circle, rgba(138, 107, 255, 0.15) 0%, transparent 70%);
+  }
+  
+  .animated-gradient {
+    background: linear-gradient(
+      45deg,
+      var(--accent-1),
+      var(--accent-2),
+      var(--accent-3),
+      var(--accent-1)
+    );
+    background-size: 400% 400%;
+    animation: gradient-move 15s ease infinite;
+  }
+  
+  .text-glow-cyan {
+    color: var(--accent-1);
+    filter: drop-shadow(0 0 8px var(--accent-1));
+  }
+  
+  .text-glow-pink {
+    color: var(--accent-2);
+    filter: drop-shadow(0 0 8px var(--accent-2));
+  }
+  
+  .text-glow-violet {
+    color: var(--accent-3);
+    filter: drop-shadow(0 0 8px var(--accent-3));
+  }
+  
+  .btn-neon {
+    @apply px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200;
+    @apply neon-border bg-bg-1 text-accent-1 hover:bg-accent-1 hover:text-bg-0;
+  }
+  
+  .btn-neon-pink {
+    @apply px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200;
+    @apply neon-border-pink bg-bg-1 text-accent-2 hover:bg-accent-2 hover:text-bg-0;
+  }
+  
+  .btn-neon-violet {
+    @apply px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200;
+    @apply neon-border-violet bg-bg-1 text-accent-3 hover:bg-accent-3 hover:text-bg-0;
+  }
+  
+  .card-neon {
+    @apply bg-bg-1 rounded-xl p-6 neon-border;
+  }
+  
+  .input-neon {
+    @apply w-full px-4 py-3 bg-bg-0 border-2 border-accent-1 rounded-lg;
+    @apply text-fg-0 placeholder-fg-subtle outline-none;
+    @apply focus:border-accent-2 focus:shadow-lg transition-all duration-200;
+  }
+}
+
+.moving-gradient-bg {
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at 20% 50%,
+    rgba(0, 255, 247, 0.03) 0%,
+    transparent 25%
+  ),
+  radial-gradient(
+    circle at 80% 50%,
+    rgba(255, 45, 149, 0.03) 0%,
+    transparent 25%
+  ),
+  radial-gradient(
+    circle at 50% 80%,
+    rgba(138, 107, 255, 0.03) 0%,
+    transparent 25%
+  );
+  animation: gradient-move 20s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes gradient-move {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(10%, 10%) rotate(360deg);
+  }
+}
+
+.cinematic-pause-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pause-effect 0.5s ease-out;
+}
+
+@keyframes pause-effect {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+  }
+  50% {
+    filter: saturate(0) brightness(2);
+  }
+  100% {
+    opacity: 1;
+    filter: saturate(1) brightness(1);
+  }
+}
+
+.glitch-wipe {
+  animation: glitch 0.3s steps(2, end);
+}
+
+@keyframes glitch {
+  0% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0);
+  }
+  25% {
+    clip-path: inset(0 0 60% 0);
+    transform: translate(-5px, 5px);
+  }
+  50% {
+    clip-path: inset(60% 0 0 0);
+    transform: translate(5px, -5px);
+  }
+  75% {
+    clip-path: inset(0 0 30% 0);
+    transform: translate(-3px, 3px);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0);
+  }
+}
+
+.breathing-glow {
+  animation: breathing 2s ease-in-out infinite;
+}
+
+@keyframes breathing {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--accent-1), 0 0 40px var(--accent-1);
+  }
+  50% {
+    box-shadow: 0 0 30px var(--accent-1), 0 0 60px var(--accent-1);
+  }
+}
+

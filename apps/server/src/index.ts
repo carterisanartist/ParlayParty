@@ -1,0 +1,165 @@
+import 'dotenv/config';
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import compression from 'compression';
+import helmet from 'helmet';
+import path from 'path';
+import fs from 'fs';
+import { PrismaClient } from '@prisma/client';
+import { setupSocketHandlers } from './socket-handlers';
+import redis from './redis';
+import { upload } from './upload';
+
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' ? false : '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
+const prisma = new PrismaClient();
+const PORT = process.env.PORT || 8080;
+
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(compression());
+app.use(cors());
+app.use(express.json());
+
+app.get('/healthz', (req, res) => {
+  res.json({
+    ok: true,
+    version: '1.0.0',
+    uptime: process.uptime(),
+  });
+});
+
+app.post('/upload', upload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No video file uploaded' });
+    }
+    
+    const { roundId } = req.body;
+    const videoUrl = `/media/${roundId || 'temp'}/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      videoUrl,
+      filename: req.file.filename,
+    });
+  } catch (error: any) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: error.message || 'Upload failed' });
+  }
+});
+
+app.get('/media/:roundId/:filename', async (req, res) => {
+  try {
+    const { roundId, filename } = req.params;
+    const uploadsDir = process.env.UPLOADS_DIR || '/data/uploads';
+    const filePath = path.join(uploadsDir, roundId, filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+    
+    if (range) {
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunkSize = end - start + 1;
+      const file = fs.createReadStream(filePath, { start, end });
+      
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunkSize,
+        'Content-Type': 'video/mp4',
+      });
+      
+      file.pipe(res);
+    } else {
+      res.writeHead(200, {
+        'Content-Length': fileSize,
+        'Content-Type': 'video/mp4',
+      });
+      
+      fs.createReadStream(filePath).pipe(res);
+    }
+  } catch (error) {
+    console.error('Error streaming media:', error);
+    res.status(500).json({ error: 'Failed to stream media' });
+  }
+});
+
+io.use((socket, next) => {
+  const roomCode = socket.handshake.query.roomCode as string;
+  if (roomCode) {
+    socket.data.roomCode = roomCode;
+  }
+  next();
+});
+
+setupSocketHandlers(io);
+
+const nextDir = path.join(__dirname, '.next');
+if (fs.existsSync(nextDir)) {
+  const nextHandler = require('next/dist/server/next').default;
+  const nextApp = nextHandler({
+    dev: false,
+    dir: path.join(__dirname, '..'),
+  });
+  
+  nextApp.prepare().then(() => {
+    app.all('*', (req, res) => {
+      return nextApp.getRequestHandler()(req, res);
+    });
+  });
+} else {
+  app.get('*', (req, res) => {
+    res.json({ message: 'Parlay Party API - Next.js app not built yet' });
+  });
+}
+
+async function bootstrap() {
+  try {
+    console.log('Running Prisma migrations...');
+    const { execSync } = require('child_process');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    console.log('Migrations completed');
+  } catch (error) {
+    console.error('Migration failed:', error);
+  }
+  
+  await prisma.$connect();
+  console.log('Database connected');
+  
+  httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/healthz`);
+  });
+}
+
+bootstrap().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  await prisma.$disconnect();
+  await redis.quit();
+  httpServer.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+

@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  hostId    String
+  status    String   @default("lobby")
+  settings  Json
+  createdAt DateTime @default(now())
+
+  players  Player[]
+  rounds   Round[]
+
+  @@index([code])
+  @@index([hostId])
+}
+
+model Player {
+  id         String   @id @default(cuid())
+  roomId     String
+  name       String
+  avatarUrl  String?
+  isHost     Boolean  @default(false)
+  latencyMs  Int      @default(0)
+  scoreTotal Float    @default(0)
+  createdAt  DateTime @default(now())
+
+  room              Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  parlays           Parlay[]
+  votes             Vote[]
+  markers           Marker[]
+  wheelEntries      WheelEntry[]
+  punishmentSpins   PunishmentSpin[]
+
+  @@index([roomId])
+}
+
+model Round {
+  id          String   @id @default(cuid())
+  roomId      String
+  index       Int
+  videoType   String
+  videoId     String?
+  videoUrl    String?
+  durationSec Float?
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+
+  room              Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  parlays           Parlay[]
+  votes             Vote[]
+  markers           Marker[]
+  confirmedEvents   ConfirmedEvent[]
+  wheelEntries      WheelEntry[]
+  punishmentSpins   PunishmentSpin[]
+
+  @@index([roomId])
+  @@index([roomId, index])
+}
+
+model Parlay {
+  id             String    @id @default(cuid())
+  roundId        String
+  playerId       String
+  text           String
+  normalizedText String
+  lockedAt       DateTime  @default(now())
+  completedAt    DateTime?
+  scoreRaw       Float     @default(0)
+  scoreFinal     Float     @default(0)
+  legsHit        Int       @default(0)
+  accuracy       Float     @default(0)
+
+  round  Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+  @@index([playerId])
+  @@index([normalizedText])
+}
+
+model Vote {
+  id             String   @id @default(cuid())
+  roundId        String
+  playerId       String
+  normalizedText String
+  tVideoSec      Float
+  createdAt      DateTime @default(now())
+
+  round  Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+  @@index([playerId])
+  @@index([normalizedText])
+  @@index([roundId, tVideoSec])
+}
+
+model Marker {
+  id        String  @id @default(cuid())
+  roundId   String
+  hostId    String
+  tVideoSec Float
+  note      String?
+
+  round Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  host  Player @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+  @@index([tVideoSec])
+}
+
+model ConfirmedEvent {
+  id             String   @id @default(cuid())
+  roundId        String
+  normalizedText String
+  tVideoSec      Float
+  source         String
+  awardedTo      Json
+  createdAt      DateTime @default(now())
+
+  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+  @@index([normalizedText])
+}
+
+model WheelEntry {
+  id                  String   @id @default(cuid())
+  roundId             String
+  submittedByPlayerId String
+  text                String
+  status              String   @default("pending")
+  weight              Float    @default(1.0)
+  createdAt           DateTime @default(now())
+
+  round         Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  submittedBy   Player @relation(fields: [submittedByPlayerId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+  @@index([status])
+}
+
+model PunishmentSpin {
+  id              String   @id @default(cuid())
+  roundId         String
+  loserPlayerId   String
+  selectedEntryId String
+  entriesJson     Json
+  commitSeed      String
+  revealSeed      String
+  createdAt       DateTime @default(now())
+
+  round Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  loser Player @relation(fields: [loserPlayerId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+  @@index([loserPlayerId])
+}
+
