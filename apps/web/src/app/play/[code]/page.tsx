@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useSocket, measureLatency } from '@/lib/socket';
 import { audioManager } from '@/lib/audio';
 import { PlayerJoin } from '@/components/player/PlayerJoin';
+import { PlayerLobby } from '@/components/player/PlayerLobby';
 import { PlayerParlay } from '@/components/player/PlayerParlay';
 import { PlayerReveal } from '@/components/player/PlayerReveal';
 import { PlayerVideo } from '@/components/player/PlayerVideo';
@@ -98,15 +99,11 @@ export default function PlayerPage() {
   return (
     <div className="min-h-screen p-4">
       {status === 'lobby' && (
-        <div className="max-w-md mx-auto text-center py-12 space-y-6">
-          <h1 className="font-display text-6xl glow-cyan">
-            WELCOME
-          </h1>
-          <div className="card-neon p-8">
-            <p className="text-2xl font-semibold mb-2">{currentPlayer.name}</p>
-            <p className="text-fg-subtle">Waiting for host to start...</p>
-          </div>
-        </div>
+        <PlayerLobby
+          socket={socket}
+          roomCode={roomCode}
+          player={currentPlayer}
+        />
       )}
       
       {status === 'parlay' && currentRound && (

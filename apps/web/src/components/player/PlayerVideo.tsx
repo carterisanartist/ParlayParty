@@ -25,6 +25,7 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
     });
 
     socket.on('parlay:all', ({ parlays }) => {
+      console.log('Received parlays:', parlays);
       setAllParlays(parlays);
     });
 
@@ -33,6 +34,8 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
       socket.off('parlay:all');
     };
   }, [socket]);
+
+  console.log('Current parlays in state:', allParlays.length);
 
   const handleItHappened = () => {
     if (cooldown) return;
@@ -134,6 +137,12 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
               <h2 className="font-display text-3xl glow-pink mb-6 text-center">
                 WHAT HAPPENED?
               </h2>
+
+              {allParlays.length === 0 && (
+                <p className="text-center text-fg-subtle py-8">
+                  Loading parlays...
+                </p>
+              )}
 
               <div className="space-y-3">
                 {allParlays.map((parlay) => (

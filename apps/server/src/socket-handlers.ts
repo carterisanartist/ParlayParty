@@ -373,9 +373,18 @@ export function setupSocketHandlers(io: Server) {
           data: { status: 'video' },
         });
         
-        // Fetch and broadcast all parlays to all players
+        // Fetch and broadcast all parlays with player info
         const allParlays = await prisma.parlay.findMany({
           where: { roundId: round.id },
+          include: {
+            player: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
         });
         
         io.to(`room:${roomCode}`).emit('parlay:locked');

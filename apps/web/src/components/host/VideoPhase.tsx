@@ -26,6 +26,7 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [eventCount, setEventCount] = useState(0);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [markers, setMarkers] = useState<any[]>([]);
 
   useEffect(() => {
     socket.on('video:pause_auto', ({ tCenter, normalizedText, voters }) => {
@@ -72,7 +73,12 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
       setTimeout(() => setShowScoreboard(false), 5000);
     });
 
+    socket.on('marker:added', ({ marker }) => {
+      setMarkers((prev) => [...prev, marker]);
+    });
+
     return () => {
+      socket.off('marker:added');
       socket.off('event:confirmed');
       socket.off('video:pause_auto');
       socket.off('video:resume');
@@ -120,7 +126,15 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   const handleMark = () => {
     if (player) {
       const tVideoSec = player.getCurrentTime();
-      socket.emit('host:mark', { tVideoSec, note: '' });
+      const note = prompt('Add note (optional):') || '';
+      socket.emit('host:mark', { tVideoSec, note });
+      
+      // Visual feedback
+      const tempMarker = document.createElement('div');
+      tempMarker.textContent = '📍 Marked';
+      tempMarker.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#00FFF7;color:#0B0B0B;padding:16px 32px;border-radius:8px;font-weight:bold;z-index:9999;';
+      document.body.appendChild(tempMarker);
+      setTimeout(() => tempMarker.remove(), 2000);
     }
   };
 
@@ -173,9 +187,17 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
         )}
 
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
-          <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border pointer-events-auto">
-            <p className="text-sm text-fg-subtle mb-1">EVENT COUNT</p>
-            <p className="text-3xl font-mono font-bold text-accent-1">{eventCount}</p>
+          <div className="space-y-2 pointer-events-auto">
+            <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border">
+              <p className="text-sm text-fg-subtle mb-1">EVENTS</p>
+              <p className="text-3xl font-mono font-bold text-accent-1">{eventCount}</p>
+            </div>
+            {markers.length > 0 && (
+              <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border-violet">
+                <p className="text-sm text-fg-subtle mb-1">MARKERS</p>
+                <p className="text-2xl font-mono font-bold text-accent-3">{markers.length}</p>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 pointer-events-auto">

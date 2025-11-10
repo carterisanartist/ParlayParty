@@ -68,12 +68,12 @@ export function ParlayPhase({ socket, round, players }: ParlayPhaseProps) {
             return (
               <motion.div
                 key={player.id}
-                initial={{ scale: 0, rotateY: 180 }}
+                initial={{ scale: 0, opacity: 0 }}
                 animate={{
                   scale: 1,
-                  rotateY: submitted ? 0 : 180,
+                  opacity: 1,
                 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.3 }}
                 className={`
                   p-4 rounded-xl text-center space-y-2
                   ${submitted ? 'neon-border bg-bg-0' : 'bg-bg-0 border-2 border-fg-subtle/30'}

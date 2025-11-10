@@ -17,6 +17,23 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
   const [isLocked, setIsLocked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const getVideoTitle = () => {
+    if (round.videoType === 'youtube' && round.videoId) {
+      return `YouTube Video`;
+    }
+    if (round.videoType === 'tiktok') {
+      return 'TikTok Video';
+    }
+    return 'Uploaded Video';
+  };
+
+  const getVideoThumbnail = () => {
+    if (round.videoType === 'youtube' && round.videoId) {
+      return `https://img.youtube.com/vi/${round.videoId}/maxresdefault.jpg`;
+    }
+    return null;
+  };
+
   const examplePredictions = [
     'Someone screams',
     'The cat jumps',
@@ -40,6 +57,8 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
     }, 500);
   };
 
+  const thumbnail = getVideoThumbnail();
+
   return (
     <div className="max-w-md mx-auto py-8 space-y-6">
       <motion.div
@@ -54,6 +73,24 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
           What will happen in this video?
         </p>
       </motion.div>
+
+      {/* Video Preview */}
+      <div className="card-neon p-4 space-y-3">
+        {thumbnail && (
+          <img
+            src={thumbnail}
+            alt="Video thumbnail"
+            className="w-full rounded-lg"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        )}
+        <div className="text-center">
+          <p className="font-semibold text-accent-1">{getVideoTitle()}</p>
+          <p className="text-sm text-fg-subtle">Make your prediction below</p>
+        </div>
+      </div>
 
       {!isLocked ? (
         <motion.div
