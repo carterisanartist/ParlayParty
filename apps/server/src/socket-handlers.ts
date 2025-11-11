@@ -50,6 +50,8 @@ export function setupSocketHandlers(io: Server) {
         let player = await prisma.player.findFirst({
           where: { roomId: room.id, name }
         });
+        
+        let isNewPlayer = false;
 
         if (player) {
           console.log('🔄 Player reconnecting:', name, 'Room status:', room.status);
@@ -72,6 +74,8 @@ export function setupSocketHandlers(io: Server) {
               isHost,
             },
           });
+          
+          isNewPlayer = true;
         }
         
         // If this is the first player, make them the host
@@ -92,17 +96,14 @@ export function setupSocketHandlers(io: Server) {
           orderBy: { index: 'desc' },
         });
         
-        // Check if this is actually a new player (not reconnection)
-        const wasReconnection = !!await prisma.player.findFirst({
-          where: { roomId: room.id, name }
-        });
-        
-        if (!wasReconnection && name.toLowerCase().includes('tyler')) {
+        // Tyler easter egg - only for new players
+        if (isNewPlayer && name.toLowerCase().includes('tyler')) {
           console.log('🎵 Tyler joined! Playing sound...');
           io.to(`room:${roomCode}`).emit('tyler:sound');
         }
         
-        if (!wasReconnection) {
+        // Only broadcast player:joined for new players
+        if (isNewPlayer) {
           io.to(`room:${roomCode}`).emit('player:joined', { player });
         }
         
