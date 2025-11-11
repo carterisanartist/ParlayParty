@@ -50,9 +50,9 @@ export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatar
             e.currentTarget.outerHTML = '<span class="text-2xl">🍕</span>';
           }}
         />
-      ) : avatarUrl ? (
+      ) : player.avatarUrl ? (
         <img
-          src={avatarUrl}
+          src={player.avatarUrl}
           alt={player.name}
           className="w-full h-full rounded-full object-cover"
         />
