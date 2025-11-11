@@ -29,7 +29,8 @@ export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatar
            lowerName === 'matt';
   };
 
-  const pizzaHutLogo = '/pizza-hut-logo';
+  const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080';
+  const pizzaHutLogo = `${serverUrl}/pizza-hut-logo`;
   const shouldUsePizzaHut = isPizzaHutName(player.name);
   const avatarUrl = shouldUsePizzaHut ? pizzaHutLogo : player.avatarUrl;
 
@@ -38,27 +39,26 @@ export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatar
       whileHover={{ scale: 1.1 }}
       className={`${sizeClasses[size]} ${glowClass} rounded-full flex items-center justify-center bg-bg-1 font-bold relative`}
     >
-      {avatarUrl ? (
+      {shouldUsePizzaHut ? (
+        <img
+          src={pizzaHutLogo}
+          alt="Pizza Hut Logo"
+          className="w-full h-full rounded-full object-cover bg-white p-1"
+          onError={(e) => {
+            console.log('Pizza Hut logo failed to load for', player.name);
+            e.currentTarget.outerHTML = '<span class="text-2xl">🍕</span>';
+          }}
+        />
+      ) : avatarUrl ? (
         <img
           src={avatarUrl}
           alt={player.name}
           className="w-full h-full rounded-full object-cover"
-          onError={(e) => {
-            // Fallback to initials if image fails to load
-            if (shouldUsePizzaHut) {
-              console.log('Pizza Hut logo failed to load for', player.name);
-              e.currentTarget.style.display = 'none';
-            }
-          }}
         />
       ) : (
         <span className="text-accent-1">
           {player.name.charAt(0).toUpperCase()}
         </span>
-      )}
-      
-      {shouldUsePizzaHut && !avatarUrl && (
-        <span className="text-2xl">🍕</span>
       )}
       
       {player.isHost && (

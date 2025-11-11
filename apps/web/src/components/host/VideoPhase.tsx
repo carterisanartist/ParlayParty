@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import YouTube, { YouTubePlayer } from 'react-youtube';
 import { motion } from 'framer-motion';
 import { CinematicPause } from '../CinematicPause';
-import { GameOverModal } from '../GameOverModal';
 import { Scoreboard } from '../Scoreboard';
 import { EventLog } from './EventLog';
 import { LiveScoreboard } from './LiveScoreboard';
@@ -348,15 +347,22 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
         }}
       />
 
-      <GameOverModal
-        isVisible={!!gameOver}
-        finalScores={gameOver?.finalScores || []}
-        winner={gameOver?.winner || null}
-        onNewGame={() => {
-          setGameOver(null);
-          window.location.href = '/';
-        }}
-      />
+      {gameOver && (
+        <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center">
+          <div className="bg-bg-0 border-2 border-accent-1 rounded-2xl p-8 max-w-lg text-center">
+            <h1 className="text-4xl font-display mb-4 text-accent-1">🏆 GAME OVER! 🏆</h1>
+            {gameOver.winner && (
+              <h2 className="text-2xl mb-4">Winner: {gameOver.winner.name} ({gameOver.winner.scoreTotal} pts)</h2>
+            )}
+            <button
+              onClick={() => window.location.href = '/'}
+              className="btn-neon-pink py-3 px-6"
+            >
+              NEW GAME
+            </button>
+          </div>
+        </div>
+      )}
 
       {videoEnded && (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">

@@ -28,10 +28,6 @@ export function useSocket(roomCode: string) {
       setConnected(false);
     });
 
-    newSocket.on('connect', () => {
-      console.log('Socket reconnected');
-      setConnected(true);
-    });
 
     socketRef.current = newSocket;
     setSocket(newSocket);
