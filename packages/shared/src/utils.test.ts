@@ -13,14 +13,18 @@ describe('Shared Utils', () => {
 
   describe('calculateRarityWeight', () => {
     it('should return higher weight for rare events', () => {
-      const commonWeight = calculateRarityWeight(100, 50, 10);
-      const rareWeight = calculateRarityWeight(100, 5, 10);
+      const commonWeight = calculateRarityWeight('common', [
+        { normalizedText: 'common' }, { normalizedText: 'common' }, { normalizedText: 'rare' }
+      ]);
+      const rareWeight = calculateRarityWeight('rare', [
+        { normalizedText: 'common' }, { normalizedText: 'common' }, { normalizedText: 'rare' }
+      ]);
       
       expect(rareWeight).toBeGreaterThan(commonWeight);
     });
 
     it('should never return weight less than 1', () => {
-      const weight = calculateRarityWeight(100, 100, 10);
+      const weight = calculateRarityWeight('test', [{ normalizedText: 'test' }]);
       expect(weight).toBeGreaterThanOrEqual(1);
     });
   });
@@ -34,7 +38,7 @@ describe('Shared Utils', () => {
 
       const results = new Map<number, number>();
       for (let i = 0; i < 100; i++) {
-        const selected = selectWeightedRandom(items, `seed-${i}`);
+        const selected = selectWeightedRandom(items);
         if (selected) {
           results.set(selected.id, (results.get(selected.id) || 0) + 1);
         }
@@ -52,14 +56,14 @@ describe('Shared Utils', () => {
         { id: 2, weight: 1.0 },
       ];
 
-      const result1 = selectWeightedRandom(items, 'test-seed');
-      const result2 = selectWeightedRandom(items, 'test-seed');
+      const result1 = selectWeightedRandom(items);
+      const result2 = selectWeightedRandom(items);
       
       expect(result1?.id).toBe(result2?.id);
     });
 
     it('should handle empty array', () => {
-      const result = selectWeightedRandom([], 'test');
+      const result = selectWeightedRandom([]);
       expect(result).toBeNull();
     });
   });
