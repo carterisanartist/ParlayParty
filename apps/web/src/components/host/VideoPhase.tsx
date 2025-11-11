@@ -65,6 +65,7 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [pausedPosition, setPausedPosition] = useState<number>(0);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const [gameOver, setGameOver] = useState<GameOverData | null>(null);
 
