@@ -428,13 +428,29 @@ export function setupSocketHandlers(io: Server) {
           io.to(`room:${roomCode}`).emit('round:status', { status: 'parlay' });
           io.to(`room:${roomCode}`).emit('queue:updated', { videos: remaining });
         } else {
-          // No more videos - end game
+          // No more videos - end game with final scores
+          const finalScores = await prisma.player.findMany({
+            where: { roomId: room.id },
+            orderBy: { scoreTotal: 'desc' },
+            select: {
+              id: true,
+              name: true,
+              scoreTotal: true,
+            },
+          });
+          
           await prisma.room.update({
             where: { id: room.id },
             data: { status: 'results' },
           });
           
+          console.log('🏆 Game Over! Final scores:', finalScores);
+          
           io.to(`room:${roomCode}`).emit('round:status', { status: 'results' });
+          io.to(`room:${roomCode}`).emit('game:over', { 
+            finalScores,
+            winner: finalScores[0] || null 
+          });
         }
       } catch (error) {
         console.error('Error ending round:', error);

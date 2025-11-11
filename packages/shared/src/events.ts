@@ -28,6 +28,7 @@ export interface ServerToClientEvents {
   'error': (data: { message: string }) => void;
   'queue:updated': (data: { videos: VideoQueueItem[] }) => void;
   'tyler:sound': () => void;
+  'game:over': (data: { finalScores: { id: string; name: string; scoreTotal: number }[]; winner: { id: string; name: string; scoreTotal: number } | null }) => void;
 }
 
 export interface ClientToServerEvents {
