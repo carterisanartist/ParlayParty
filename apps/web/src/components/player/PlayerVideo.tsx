@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import YouTube from 'react-youtube';
 import { audioManager } from '@/lib/audio';
 import { VerificationModal } from './VerificationModal';
+import { SoloVerificationHelper } from './SoloVerificationHelper';
 import type { Player, Round, Parlay } from '@parlay-party/shared';
 import type { Socket } from 'socket.io-client';
 
@@ -229,6 +230,9 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
 
       {/* Verification Modal */}
       <VerificationModal socket={socket} />
+      
+      {/* Solo Mode Helper - Auto-approves own votes */}
+      <SoloVerificationHelper socket={socket} />
     </div>
   );
 }

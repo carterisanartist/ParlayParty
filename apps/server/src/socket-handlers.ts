@@ -501,12 +501,16 @@ export function setupSocketHandlers(io: Server) {
         
         console.log(`Verification responses: ${totalResponses}/${otherPlayersCount} (TRUE: ${trueCount}, FALSE: ${falseCount})`);
         
-        // Check if we have all responses or majority
-        if (totalResponses >= otherPlayersCount || totalResponses >= Math.ceil(otherPlayersCount / 2)) {
+        // Check if we have all responses or majority (or if solo player after 1 second)
+        const isSolo = otherPlayersCount === 0;
+        const hasEnoughVotes = totalResponses >= otherPlayersCount || totalResponses >= Math.ceil(otherPlayersCount / 2);
+        
+        if (hasEnoughVotes || isSolo) {
           const vote = await prisma.vote.findUnique({ where: { id: voteId } });
           if (!vote) return;
           
-          const majority = trueCount > falseCount;
+          // Solo player always gets approved
+          const majority = isSolo ? true : trueCount > falseCount;
           
           if (majority) {
             // Award simple +1 point
