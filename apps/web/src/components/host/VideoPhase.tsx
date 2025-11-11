@@ -153,7 +153,7 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full px-6 py-4 space-y-6">
       {/* Video Title */}
       {round.videoTitle && (
         <div className="text-center">
@@ -163,28 +163,28 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
         </div>
       )}
       
-      <div className="grid lg:grid-cols-[250px_1fr_300px] gap-6">
+      <div className="grid lg:grid-cols-[280px_1fr_320px] gap-6">
         {/* Left Sidebar - Counters & Parlays */}
-        <div className="space-y-4">
-          <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border">
-            <p className="text-sm text-fg-subtle mb-1">EVENTS</p>
-            <p className="text-3xl font-mono font-bold text-accent-1">{eventCount}</p>
+        <div className="space-y-4 text-lg">
+          <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-5 neon-border">
+            <p className="text-base text-fg-subtle mb-2 font-semibold">EVENTS</p>
+            <p className="text-5xl font-mono font-bold text-accent-1">{eventCount}</p>
           </div>
           
           {markers.length > 0 && (
-            <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border-violet">
-              <p className="text-sm text-fg-subtle mb-1">MARKERS</p>
-              <p className="text-2xl font-mono font-bold text-accent-3">{markers.length}</p>
+            <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-5 neon-border-violet">
+              <p className="text-base text-fg-subtle mb-2 font-semibold">MARKERS</p>
+              <p className="text-4xl font-mono font-bold text-accent-3">{markers.length}</p>
             </div>
           )}
           
           {duration > 0 && (
-            <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border-pink">
-              <p className="text-sm text-fg-subtle mb-1">TIME</p>
-              <p className="text-xl font-mono font-bold text-accent-2">
+            <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-5 neon-border-pink">
+              <p className="text-base text-fg-subtle mb-2 font-semibold">TIME</p>
+              <p className="text-2xl font-mono font-bold text-accent-2">
                 {Math.floor(currentTime)}s / {Math.floor(duration)}s
               </p>
-              <div className="mt-2 h-1 bg-bg-0 rounded-full overflow-hidden">
+              <div className="mt-3 h-2 bg-bg-0 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-accent-2"
                   style={{ width: `${(currentTime / duration) * 100}%` }}
@@ -244,19 +244,8 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
           </div>
         )}
         
-          {/* Event Log & Controls Below Video */}
-          <div className="flex gap-4 items-center">
-            <EventLog socket={socket} />
-            
-            <button
-              onClick={handleSkipVideo}
-              className="px-4 py-2 bg-danger/20 border-2 border-danger text-danger rounded-lg font-semibold hover:bg-danger/30"
-            >
-              ⏭️ SKIP VIDEO
-            </button>
-          </div>
-
-          <div className="absolute top-4 right-4 flex gap-2 pointer-events-auto">
+          {/* Controls & Event Log Below Video */}
+          <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => {
                 if (player) {
@@ -270,17 +259,26 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
                   setIsPaused(!isPaused);
                 }
               }}
-              className="btn-neon px-4"
+              className="btn-neon py-4 text-xl font-display"
             >
               {isPaused ? '▶️ PLAY' : '⏸️ PAUSE'}
             </button>
             <button
               onClick={handleMark}
-              className="btn-neon-violet"
+              className="btn-neon-violet py-4 text-xl font-display"
             >
               📍 MARK
             </button>
           </div>
+
+          <EventLog socket={socket} />
+          
+          <button
+            onClick={handleSkipVideo}
+            className="w-full px-6 py-3 bg-danger/20 border-2 border-danger text-danger rounded-lg font-semibold hover:bg-danger/30 text-lg"
+          >
+            ⏭️ SKIP VIDEO
+          </button>
         </div>
         </div>
         
