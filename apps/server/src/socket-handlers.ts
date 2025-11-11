@@ -510,13 +510,13 @@ export function setupSocketHandlers(io: Server) {
             });
             
             // Update parlay
-            const parlay = await prisma.parlay.findFirst({
+            const parlayToUpdate = await prisma.parlay.findFirst({
               where: { roundId: vote.roundId, playerId: vote.playerId },
             });
             
-            if (parlay) {
+            if (parlayToUpdate) {
               await prisma.parlay.update({
-                where: { id: parlay.id },
+                where: { id: parlayToUpdate.id },
                 data: {
                   scoreFinal: { increment: 1 },
                   legsHit: { increment: 1 },
@@ -535,8 +535,8 @@ export function setupSocketHandlers(io: Server) {
               },
             });
             
-            // Get parlay and player info for display
-            const parlay = await prisma.parlay.findFirst({
+            // Get parlay WITH player info for display
+            const parlayWithPlayer = await prisma.parlay.findFirst({
               where: { roundId: vote.roundId, normalizedText: vote.normalizedText },
               include: { player: true },
             });
@@ -549,9 +549,9 @@ export function setupSocketHandlers(io: Server) {
               tCenter: vote.tVideoSec,
               normalizedText: vote.normalizedText,
               voters: [vote.playerId],
-              punishment: parlay?.punishment,
+              punishment: parlayWithPlayer?.punishment,
               callerName: caller?.name,
-              writerName: parlay?.player?.name,
+              writerName: parlayWithPlayer?.player?.name,
             });
             
             const settings = room.settings as any as RoomSettings;
