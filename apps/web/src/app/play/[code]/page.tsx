@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { audioManager } from '@/lib/audio';
 import { useSocket, measureLatency, useGameState, useErrorHandler } from '@/hooks';
