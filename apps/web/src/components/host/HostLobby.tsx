@@ -5,9 +5,7 @@ import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { PlayerAvatar } from '../PlayerAvatar';
 import { VideoQueue } from './VideoQueue';
-import { RoomSettingsPanel } from './RoomSettings';
-import { DEFAULT_ROOM_SETTINGS } from '@parlay-party/shared';
-import type { Player, RoomSettings } from '@parlay-party/shared';
+import type { Player } from '@parlay-party/shared';
 import type { Socket } from 'socket.io-client';
 
 interface HostLobbyProps {
@@ -22,7 +20,6 @@ export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobb
   const [videoType, setVideoType] = useState<'youtube' | 'tiktok' | 'upload'>('youtube');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [roomSettings, setRoomSettings] = useState<RoomSettings>(DEFAULT_ROOM_SETTINGS);
 
   const handleStartRound = async () => {
     // Start from queue (first video)
@@ -116,8 +113,6 @@ export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobb
         </div>
 
         <div className="space-y-6">
-          <RoomSettingsPanel settings={roomSettings} onChange={setRoomSettings} />
-          
           <div className="text-center">
             <motion.button
               whileHover={{ scale: 1.05 }}

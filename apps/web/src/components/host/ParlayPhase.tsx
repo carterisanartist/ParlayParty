@@ -27,18 +27,23 @@ export function ParlayPhase({ socket, round, players }: ParlayPhaseProps) {
     };
   }, [socket]);
 
-  // Auto-lock when all NON-HOST players submit
+  // Auto-lock when all NON-HOST players submit (or just host if solo)
   useEffect(() => {
     const nonHostPlayers = players.filter(p => !p.isHost);
     const nonHostSubmitted = Array.from(submittedPlayers).filter(id => 
       nonHostPlayers.some(p => p.id === id)
     );
     
-    if (nonHostPlayers.length > 0 && nonHostSubmitted.length === nonHostPlayers.length) {
+    // Allow single player (just host)
+    if (nonHostPlayers.length === 0 && submittedPlayers.size > 0) {
+      setTimeout(() => {
+        socket.emit('parlay:lock');
+      }, 1000);
+    } else if (nonHostPlayers.length > 0 && nonHostSubmitted.length === nonHostPlayers.length) {
       // All non-host players have submitted
       setTimeout(() => {
         socket.emit('parlay:lock');
-      }, 1000); // 1 second delay before auto-lock
+      }, 1000);
     }
   }, [submittedPlayers, players, socket]);
 

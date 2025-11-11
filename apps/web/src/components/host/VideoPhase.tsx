@@ -7,6 +7,7 @@ import { CinematicPause } from '../CinematicPause';
 import { Scoreboard } from '../Scoreboard';
 import { EventLog } from './EventLog';
 import { LiveScoreboard } from './LiveScoreboard';
+import { ParlayList } from './ParlayList';
 import type { Player, Round } from '@parlay-party/shared';
 import type { Socket } from 'socket.io-client';
 
@@ -145,6 +146,12 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
     }
   };
 
+  const handleSkipVideo = () => {
+    if (confirm('Skip this video and go to next round?')) {
+      socket.emit('host:endRound');
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Video Title */}
@@ -156,9 +163,41 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
         </div>
       )}
       
-      <div className="grid lg:grid-cols-4 gap-6">
-        {/* Video Player - 3 columns */}
-        <div className="lg:col-span-3 space-y-4">
+      <div className="grid lg:grid-cols-[250px_1fr_300px] gap-6">
+        {/* Left Sidebar - Counters & Parlays */}
+        <div className="space-y-4">
+          <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border">
+            <p className="text-sm text-fg-subtle mb-1">EVENTS</p>
+            <p className="text-3xl font-mono font-bold text-accent-1">{eventCount}</p>
+          </div>
+          
+          {markers.length > 0 && (
+            <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border-violet">
+              <p className="text-sm text-fg-subtle mb-1">MARKERS</p>
+              <p className="text-2xl font-mono font-bold text-accent-3">{markers.length}</p>
+            </div>
+          )}
+          
+          {duration > 0 && (
+            <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border-pink">
+              <p className="text-sm text-fg-subtle mb-1">TIME</p>
+              <p className="text-xl font-mono font-bold text-accent-2">
+                {Math.floor(currentTime)}s / {Math.floor(duration)}s
+              </p>
+              <div className="mt-2 h-1 bg-bg-0 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-accent-2"
+                  style={{ width: `${(currentTime / duration) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+          
+          <ParlayList socket={socket} />
+        </div>
+        
+        {/* Center - Video Player */}
+        <div className="space-y-4">
           <div className="relative">
         {round.videoType === 'youtube' && round.videoId && (
           <div className="aspect-video bg-black rounded-xl overflow-hidden">
@@ -205,38 +244,19 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
           </div>
         )}
         
-          {/* Event Log Below Video */}
-          <EventLog socket={socket} />
-
-          <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
-          <div className="space-y-2 pointer-events-auto">
-            <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border">
-              <p className="text-sm text-fg-subtle mb-1">EVENTS</p>
-              <p className="text-3xl font-mono font-bold text-accent-1">{eventCount}</p>
-            </div>
-            {markers.length > 0 && (
-              <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border-violet">
-                <p className="text-sm text-fg-subtle mb-1">MARKERS</p>
-                <p className="text-2xl font-mono font-bold text-accent-3">{markers.length}</p>
-              </div>
-            )}
-            {duration > 0 && (
-              <div className="bg-bg-0/90 backdrop-blur-sm rounded-lg p-4 neon-border-pink">
-                <p className="text-sm text-fg-subtle mb-1">TIME</p>
-                <p className="text-xl font-mono font-bold text-accent-2">
-                  {Math.floor(currentTime)}s / {Math.floor(duration)}s
-                </p>
-                <div className="mt-2 h-1 bg-bg-0 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-accent-2"
-                    style={{ width: `${(currentTime / duration) * 100}%` }}
-                  />
-                </div>
-              </div>
-            )}
+          {/* Event Log & Controls Below Video */}
+          <div className="flex gap-4 items-center">
+            <EventLog socket={socket} />
+            
+            <button
+              onClick={handleSkipVideo}
+              className="px-4 py-2 bg-danger/20 border-2 border-danger text-danger rounded-lg font-semibold hover:bg-danger/30"
+            >
+              ⏭️ SKIP VIDEO
+            </button>
           </div>
 
-          <div className="flex gap-2 pointer-events-auto">
+          <div className="absolute top-4 right-4 flex gap-2 pointer-events-auto">
             <button
               onClick={() => {
                 if (player) {
@@ -262,11 +282,10 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
             </button>
           </div>
         </div>
-          </div>
         </div>
-
-        {/* Live Scoreboard - 1 column */}
-        <div className="lg:col-span-1">
+        
+        {/* Right Sidebar - Live Scoreboard */}
+        <div>
           <LiveScoreboard socket={socket} players={players} />
         </div>
       </div>

@@ -80,7 +80,7 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
         </button>
       </div>
 
-      {/* Optional Video on Phone */}
+      {/* Optional Synced Video on Phone */}
       {showVideoOnPhone && round.videoType === 'youtube' && round.videoId && (
         <div className="card-neon p-2">
           <div className="aspect-video bg-black rounded-lg overflow-hidden">
@@ -90,16 +90,21 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
                 width: '100%',
                 height: '100%',
                 playerVars: {
-                  autoplay: 0,
-                  controls: 1,
+                  autoplay: 1,
+                  controls: 0,
                   modestbranding: 1,
+                  start: Math.floor(videoTimeRef.current),
                 },
+              }}
+              onReady={(e: any) => {
+                // Sync with host on ready
+                e.target.seekTo(videoTimeRef.current, true);
               }}
               className="w-full h-full"
             />
           </div>
           <p className="text-xs text-center text-fg-subtle mt-2">
-            Syncs with host screen
+            Synced with host ({Math.floor(videoTimeRef.current)}s)
           </p>
         </div>
       )}
