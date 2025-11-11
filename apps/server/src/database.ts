@@ -13,6 +13,11 @@ class DatabaseManager {
         { emit: 'event', level: 'error' },
         { emit: 'event', level: 'warn' },
       ],
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
     });
 
     // Log slow queries

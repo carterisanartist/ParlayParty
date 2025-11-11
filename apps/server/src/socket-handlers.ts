@@ -20,6 +20,7 @@ import {
   voteAddSchema 
 } from './validation';
 import { logger, gameLogger } from './logger';
+import { cacheManager } from './cache';
 
 const prisma = databaseManager.getClient();
 

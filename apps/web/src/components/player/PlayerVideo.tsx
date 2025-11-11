@@ -41,6 +41,17 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
       }
     });
 
+    // Listen for reconnection parlays from custom event
+    const handleReconnectionParlays = (event: CustomEvent) => {
+      console.log('📱 PLAYER: Received reconnection parlays:', event.detail.parlays);
+      if (Array.isArray(event.detail.parlays)) {
+        setAllParlays(event.detail.parlays);
+        setShowParlayPicker(true);
+      }
+    };
+    
+    window.addEventListener('reconnection-parlays', handleReconnectionParlays as EventListener);
+
     socket.on('parlay:all', ({ parlays }) => {
       console.log('PlayerVideo received parlays:', parlays);
       if (Array.isArray(parlays)) {
@@ -56,6 +67,7 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
     return () => {
       socket.off('host:sync');
       socket.off('parlay:all');
+      window.removeEventListener('reconnection-parlays', handleReconnectionParlays as EventListener);
     };
   }, [socket]);
 

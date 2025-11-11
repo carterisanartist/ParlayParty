@@ -13,12 +13,17 @@
     "lint": "pnpm --recursive lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "type-check": "pnpm --recursive type-check",
-    "test": "pnpm --recursive test",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:e2e": "playwright test",
+    "test:all": "pnpm test:run && pnpm test:e2e",
     "db:migrate": "pnpm --filter @parlay-party/server db:migrate",
     "db:push": "pnpm --filter @parlay-party/server db:push",
     "db:seed": "pnpm --filter @parlay-party/server db:seed",
     "setup": "node scripts/check-platform.js",
-    "validate": "bash scripts/validate.sh"
+    "validate": "bash scripts/validate.sh",
+    "production-check": "pnpm build && pnpm test:all && echo 'Production readiness check complete!'"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

@@ -12,6 +12,8 @@ import { PlayerVideo } from '@/components/player/PlayerVideo';
 import { PlayerWheel } from '@/components/player/PlayerWheel';
 import { PlayerResults } from '@/components/player/PlayerResults';
 import { TylerSoundPlayer } from '@/components/TylerSoundPlayer';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { LoadingOverlay } from '@/components/LoadingSpinner';
 import type { Player, Room, Round, RoomStatus } from '@parlay-party/shared';
 
 export default function PlayerPage() {
@@ -25,6 +27,8 @@ export default function PlayerPage() {
   const [status, setStatus] = useState<RoomStatus>('lobby');
   const [hasJoined, setHasJoined] = useState(false);
   const [showReveal, setShowReveal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!socket || !connected) return;
@@ -67,11 +71,17 @@ export default function PlayerPage() {
   const handleJoin = async (name: string) => {
     if (!socket) return;
 
-    const latency = await measureLatency(socket);
+    setLoading(true);
+    setError(null);
 
-    socket.emit('player:join', { name }, (response) => {
+    try {
+      const latency = await measureLatency(socket);
+
+      socket.emit('player:join', { name }, (response) => {
       if ('error' in response) {
         console.error('Join error:', response.error);
+        setError(response.error || 'Failed to join room');
+        setLoading(false);
         return;
       }
       
@@ -96,12 +106,25 @@ export default function PlayerPage() {
       // Handle reconnection state recovery
       if ((response as any).parlays) {
         console.log('📱 PLAYER: Received parlays with join response:', (response as any).parlays);
-        // Trigger parlay modal display for video phase
+        // Directly set parlays for reconnection (don't emit, just set state)
         setTimeout(() => {
-          socket.emit('parlay:all', { parlays: (response as any).parlays });
+          // Trigger the same handler that normally receives parlay:all
+          if ((response as any).parlays && Array.isArray((response as any).parlays)) {
+            // This will be handled by existing parlay:all listener in PlayerVideo component
+            window.dispatchEvent(new CustomEvent('reconnection-parlays', { 
+              detail: { parlays: (response as any).parlays } 
+            }));
+          }
         }, 500);
       }
+      
+      setLoading(false);
     });
+    } catch (error) {
+      console.error('Join error:', error);
+      setError('Failed to join room. Please try again.');
+      setLoading(false);
+    }
   };
 
   if (!socket || !connected) {
@@ -124,7 +147,25 @@ export default function PlayerPage() {
   }
 
   return (
-    <div className="min-h-screen p-4">
+    <ErrorBoundary>
+      <LoadingOverlay isVisible={loading} text="Joining game..." />
+      
+      {error && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-danger/10 border-2 border-danger text-danger p-4 rounded-lg max-w-sm">
+            <p className="font-semibold mb-2">Connection Error</p>
+            <p className="text-sm">{error}</p>
+            <button 
+              onClick={() => setError(null)}
+              className="mt-3 text-xs text-danger hover:underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+      
+      <div className="min-h-screen p-4">
       {status === 'lobby' && (
         <PlayerLobby
           socket={socket}
@@ -179,7 +220,8 @@ export default function PlayerPage() {
       )}
       
       <TylerSoundPlayer socket={socket} />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
 
