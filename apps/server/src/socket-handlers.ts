@@ -562,13 +562,13 @@ export function setupSocketHandlers(io: Server) {
             });
             
             // Update parlay
-            const parlayToUpdate = await prisma.parlay.findFirst({
+            const voterParlay = await prisma.parlay.findFirst({
               where: { roundId: vote.roundId, playerId: vote.playerId },
             });
             
-            if (parlayToUpdate) {
+            if (voterParlay) {
               await prisma.parlay.update({
-                where: { id: parlayToUpdate.id },
+                where: { id: voterParlay.id },
                 data: {
                   scoreFinal: { increment: 1 },
                   legsHit: { increment: 1 },
@@ -588,12 +588,12 @@ export function setupSocketHandlers(io: Server) {
             });
             
             // Get parlay WITH player info for display
-            const parlayWithPlayer = await prisma.parlay.findFirst({
+            const displayParlay = await prisma.parlay.findFirst({
               where: { roundId: vote.roundId, normalizedText: vote.normalizedText },
               include: { player: true },
             });
             
-            const caller = await prisma.player.findUnique({ where: { id: vote.playerId } });
+            const voteSubmitter = await prisma.player.findUnique({ where: { id: vote.playerId } });
             
             // Broadcast success with punishment info
             io.to(`room:${roomCode}`).emit('event:confirmed', { event: { normalizedText: vote.normalizedText } });
@@ -601,9 +601,9 @@ export function setupSocketHandlers(io: Server) {
               tCenter: vote.tVideoSec,
               normalizedText: vote.normalizedText,
               voters: [vote.playerId],
-              punishment: parlayWithPlayer?.punishment,
-              callerName: caller?.name,
-              writerName: parlayWithPlayer?.player?.name,
+              punishment: displayParlay?.punishment,
+              callerName: voteSubmitter?.name,
+              writerName: displayParlay?.player?.name,
             });
             
             const settings = room.settings as any as RoomSettings;
