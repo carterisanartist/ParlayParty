@@ -38,14 +38,14 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
     if (!videoUrl.trim()) return;
 
     let videoId = '';
-    let autoTitle = title.trim();
+    let autoTitle = '';
     
     if (videoType === 'youtube') {
       const match = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
       videoId = match ? match[1] : '';
       
-      // Fetch YouTube title if not provided
-      if (!autoTitle && videoId) {
+      // ALWAYS fetch YouTube title
+      if (videoId) {
         try {
           const response = await fetch(
             `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
@@ -56,8 +56,13 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
           }
         } catch (e) {
           console.error('Failed to fetch title:', e);
+          autoTitle = 'YouTube Video';
         }
       }
+    } else if (videoType === 'tiktok') {
+      // Extract TikTok video ID for title
+      const match = videoUrl.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+      autoTitle = match ? `TikTok Video ${match[1]}` : 'TikTok Video';
     }
 
     socket.emit('queue:add', {
@@ -143,13 +148,15 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
           ))}
         </div>
 
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Video Title (optional)"
-          className="input-neon text-sm"
-        />
+        {videoType === 'upload' && (
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Video Title (optional)"
+            className="input-neon text-sm"
+          />
+        )}
 
         {videoType !== 'upload' ? (
           <input
