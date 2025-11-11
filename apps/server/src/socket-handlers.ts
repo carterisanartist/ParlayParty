@@ -46,24 +46,42 @@ export function setupSocketHandlers(io: Server) {
           room = newRoom;
         }
         
-        const existingPlayers = await prisma.player.count({ where: { roomId: room.id } });
-        const isHost = existingPlayers === 0;
-        
-        const player = await prisma.player.create({
-          data: {
-            roomId: room.id,
-            name,
-            avatarUrl,
-            isHost,
-          },
+        // RECONNECTION FIX: Check if player already exists
+        let player = await prisma.player.findFirst({
+          where: { roomId: room.id, name }
         });
+
+        if (player) {
+          console.log('🔄 Player reconnecting:', name, 'Room status:', room.status);
+          // Update existing player
+          player = await prisma.player.update({
+            where: { id: player.id },
+            data: { avatarUrl },
+          });
+        } else {
+          console.log('✨ New player joining:', name);
+          const existingPlayers = await prisma.player.count({ where: { roomId: room.id } });
+          const isHost = existingPlayers === 0;
+          
+          // Create new player
+          player = await prisma.player.create({
+            data: {
+              roomId: room.id,
+              name,
+              avatarUrl,
+              isHost,
+            },
+          });
+        }
         
-        if (isHost) {
+        // If this is the first player, make them the host
+        if (!room.hostId || room.hostId === 'temp') {
           await prisma.room.update({
             where: { id: room.id },
             data: { hostId: player.id },
           });
           room.hostId = player.id;
+          player.isHost = true;
         }
         
         data.playerId = player.id;
@@ -74,13 +92,19 @@ export function setupSocketHandlers(io: Server) {
           orderBy: { index: 'desc' },
         });
         
-        // Tyler easter egg - play sound
-        if (name.toLowerCase().includes('tyler')) {
+        // Tyler easter egg - only for new players
+        const isNewPlayer = !await prisma.player.findFirst({
+          where: { roomId: room.id, name, id: { not: player.id } }
+        });
+        
+        if (isNewPlayer && name.toLowerCase().includes('tyler')) {
           console.log('🎵 Tyler joined! Playing sound...');
           io.to(`room:${roomCode}`).emit('tyler:sound');
         }
         
-        io.to(`room:${roomCode}`).emit('player:joined', { player });
+        if (isNewPlayer) {
+          io.to(`room:${roomCode}`).emit('player:joined', { player });
+        }
         
         const allPlayers = await prisma.player.findMany({ where: { roomId: room.id } });
         io.to(`room:${roomCode}`).emit('roster:update', { players: allPlayers });
