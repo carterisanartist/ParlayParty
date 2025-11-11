@@ -23,7 +23,10 @@
     "db:seed": "pnpm --filter @parlay-party/server db:seed",
     "setup": "node scripts/check-platform.js",
     "validate": "bash scripts/validate.sh",
-    "production-check": "pnpm build && pnpm test:all && echo 'Production readiness check complete!'"
+    "production-check": "pnpm build && pnpm test:all && echo 'Production readiness check complete!'",
+    "analyze": "ANALYZE=true pnpm build",
+    "clean": "pnpm --recursive clean && rm -rf node_modules/.cache",
+    "dep-check": "npx depcheck && echo 'Dependency analysis complete'"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",

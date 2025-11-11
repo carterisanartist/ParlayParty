@@ -1,6 +1,10 @@
 import redis from './redis';
 import { logger } from './logger';
 
+/**
+ * Redis-based caching manager for improved performance
+ * Handles room state, parlay data, and frequently accessed information
+ */
 export class CacheManager {
   private readonly defaultTTL = 300; // 5 minutes
 

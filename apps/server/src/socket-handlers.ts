@@ -24,17 +24,32 @@ import { cacheManager } from './cache';
 
 const prisma = databaseManager.getClient();
 
+/**
+ * Socket connection data attached to each socket instance
+ * Contains room context and player identification
+ */
 interface SocketData {
   roomCode?: string;
   playerId?: string;
 }
 
+/**
+ * Sets up all Socket.io event handlers for real-time game communication
+ * Handles player joins, votes, game state management, and room updates
+ * 
+ * @param io - Socket.io server instance
+ */
 export function setupSocketHandlers(io: Server) {
   io.on('connection', (socket: Socket) => {
     logger.info('Client connected', { socketId: socket.id, timestamp: new Date().toISOString() });
     
     const data = socket.data as SocketData;
     
+    /**
+     * Handle player joining a room
+     * Supports both new players and reconnections
+     * Validates input and manages room/player state
+     */
     socket.on('player:join', async ({ name, avatarUrl }, callback) => {
       try {
         // Rate limiting
@@ -146,7 +161,7 @@ export function setupSocketHandlers(io: Server) {
         // Input validation
         const validatedInput = validateInput(voteAddSchema, { tVideoSec, normalizedText, parlayText });
         
-        console.log('🎯 VOTE:ADD received from player:', data.playerId, validatedInput);
+        gameLogger.voteReceived(playerId, validatedInput.parlayText, validatedInput.tVideoSec);
         
         const { roomCode, playerId } = data;
         if (!roomCode || !playerId) {
@@ -169,7 +184,11 @@ export function setupSocketHandlers(io: Server) {
         const allPlayers = await prisma.player.findMany({ where: { roomId: room!.id } });
         const otherPlayers = allPlayers.filter(p => p.id !== playerId);
         
-        console.log(`🎮 Room has ${allPlayers.length} players, ${otherPlayers.length} others`);
+        logger.debug('Vote processing', { 
+          roomPlayers: allPlayers.length, 
+          otherPlayers: otherPlayers.length,
+          playerId 
+        });
         
         // Award point immediately and pause video
         await prisma.player.update({
@@ -189,12 +208,12 @@ export function setupSocketHandlers(io: Server) {
             where: { id: punishmentParlay.id },
             data: { isUsed: true },
           });
-          console.log('✅ Marked parlay as used (once only)');
+          logger.info('Parlay marked as used', { parlayId: punishmentParlay.id, frequency: 'once' });
         }
         
         const caller = await prisma.player.findUnique({ where: { id: playerId } });
         
-        console.log('✅ Awarding point and broadcasting pause');
+        logger.info('Vote processed successfully', { playerId, eventText: normalizedText, points: 1 });
         
         // Broadcast pause immediately  
         io.to(`room:${roomCode}`).emit('event:confirmed', { event: { normalizedText } });

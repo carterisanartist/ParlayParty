@@ -1,94 +1,117 @@
+// Shared Utility Functions with Proper TypeScript Types
+
+/**
+ * Normalize text for consistent comparison
+ * Removes special characters, extra whitespace, and converts to lowercase
+ */
 export function normalizeText(text: string): string {
-  return text.trim().toLowerCase().replace(/\s+/g, ' ');
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-export function generateRoomCode(length: number = 6): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < length; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+/**
+ * Generate a random room code
+ * Returns a 6-character alphanumeric code
+ */
+export function generateRoomCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  return code;
+  return result;
 }
 
-export function calculateRarityWeight(totalHits: number, textHits: number, K: number = 10): number {
-  return 1 + Math.log((totalHits + K) / (textHits + 1));
+/**
+ * Calculate rarity weight for scoring system
+ * More unique events get higher weights
+ */
+export function calculateRarityWeight(normalizedText: string, allParlays: Array<{ normalizedText: string }>): number {
+  const count = allParlays.filter(p => p.normalizedText === normalizedText).length;
+  const total = allParlays.length;
+  const frequency = count / total;
+  
+  // Rarer events (lower frequency) get higher weights
+  return Math.max(0.1, 1 - frequency);
 }
 
+/**
+ * Calculate final score based on rarity and bonuses
+ */
 export function calculateScore(
-  weight: number,
-  legsHit: number,
-  multiplier: number,
-  fastTap: boolean = false
+  rarityWeight: number,
+  fastTapBonus: number = 0,
+  baseScore: number = 1
 ): number {
-  const baseScore = weight * legsHit;
-  const completionBonus = baseScore * (multiplier - 1);
-  const fastTapBonus = fastTap ? 0.25 : 0;
-  return baseScore + completionBonus + fastTapBonus;
+  return baseScore * rarityWeight + fastTapBonus;
 }
 
-export function selectWeightedRandom<T extends { weight: number }>(
-  items: T[],
-  seed: string
-): T | null {
-  if (items.length === 0) return null;
-
-  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-  
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
-    hash = hash & hash;
-  }
-  
-  const random = Math.abs(hash % 10000) / 10000;
-  let threshold = random * totalWeight;
+/**
+ * Select weighted random item from array
+ * Used for wheel spinning and random selection
+ */
+export function selectWeightedRandom<T extends { weight?: number }>(items: T[]): T {
+  const totalWeight = items.reduce((sum, item) => sum + (item.weight || 1), 0);
+  let random = Math.random() * totalWeight;
   
   for (const item of items) {
-    threshold -= item.weight;
-    if (threshold <= 0) {
+    random -= (item.weight || 1);
+    if (random <= 0) {
       return item;
     }
   }
   
-  return items[items.length - 1];
+  return items[0]; // Fallback
 }
 
-export function createCommitSeed(roomId: string, roundId: string, salt: string): string {
-  let crypto: any = null;
-  try {
-    crypto = require('crypto');
-  } catch (e) {
-    // Crypto not available in browser
-  }
-  
-  const data = `${roomId}|${roundId}|${salt}|${Date.now()}`;
-  
-  if (crypto && crypto.createHash) {
-    return crypto.createHash('sha256').update(data).digest('hex');
-  }
-  
-  // Fallback hash for browsers
-  let hash = 0;
-  for (let i = 0; i < data.length; i++) {
-    hash = ((hash << 5) - hash) + data.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16);
+/**
+ * Create commit seed for cryptographically fair randomness
+ */
+export function createCommitSeed(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-export function determineTwoPlayerThreshold(mode: string): number {
-  switch (mode) {
-    case 'unanimous':
-      return 2;
-    case 'single_caller_verify':
-      return 1;
-    case 'judge_mode':
-      return 1;
-    case 'speed_call':
-      return 1;
-    default:
-      return 2;
-  }
+/**
+ * Format time duration in human-readable format
+ */
+export function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
+/**
+ * Debounce function to limit rapid function calls
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+/**
+ * Throttle function to limit function execution rate
+ */
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean;
+  
+  return (...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
+}

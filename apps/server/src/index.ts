@@ -30,7 +30,9 @@ const io = new Server(httpServer, {
 });
 
 const prisma = databaseManager.getClient();
-const PORT = process.env.PORT || 8080;
+import { config } from './config';
+
+const PORT = config.PORT;
 
 app.use(helmet({
   contentSecurityPolicy: {

@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-// Input validation schemas
+/**
+ * Input validation schemas for all user-provided data
+ * Ensures data integrity and security across the application
+ */
 export const playerJoinSchema = z.object({
   name: z.string()
     .trim()
