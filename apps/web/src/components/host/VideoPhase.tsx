@@ -331,7 +331,7 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
             onClick={() => socket.emit('host:endRound')}
             className="btn-neon-pink py-6 px-12 text-3xl font-display tracking-widest shadow-2xl"
           >
-            END ROUND →
+            NEXT VIDEO →
           </motion.button>
         </div>
       )}

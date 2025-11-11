@@ -327,6 +327,14 @@ export function setupSocketHandlers(io: Server) {
         
         const newIndex = (lastRound?.index || 0) + 1;
         
+        // Reset all parlays for new round
+        if (lastRound) {
+          await prisma.parlay.updateMany({
+            where: { roundId: lastRound.id },
+            data: { isUsed: false },
+          });
+        }
+        
         const round = await prisma.round.create({
           data: {
             roomId: room.id,
@@ -351,12 +359,86 @@ export function setupSocketHandlers(io: Server) {
           orderBy: { order: 'asc' },
         });
         
+        console.log(`🎬 Starting new round ${newIndex} with video: ${nextVideo.title}`);
+        
         io.to(`room:${roomCode}`).emit('round:started', { round });
         io.to(`room:${roomCode}`).emit('round:status', { status: 'parlay' });
         io.to(`room:${roomCode}`).emit('queue:updated', { videos: remaining });
       } catch (error) {
         console.error('Error starting from queue:', error);
         socket.emit('error', { message: 'Failed to start round' });
+      }
+    });
+
+    socket.on('host:endRound', async () => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room || room.hostId !== playerId) return;
+        
+        const round = await prisma.round.findFirst({
+          where: { roomId: room.id },
+          orderBy: { index: 'desc' },
+        });
+        if (!round) return;
+        
+        // Check if there are more videos in queue
+        const nextVideo = await prisma.videoQueue.findFirst({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        if (nextVideo) {
+          // Auto-start next video with new parlays
+          console.log('🎬 Auto-advancing to next video');
+          
+          // Reset parlays for new round
+          await prisma.parlay.updateMany({
+            where: { roundId: round.id },
+            data: { isUsed: false },
+          });
+          
+          const newRound = await prisma.round.create({
+            data: {
+              roomId: room.id,
+              index: round.index + 1,
+              videoType: nextVideo.videoType,
+              videoId: nextVideo.videoId,
+              videoUrl: nextVideo.videoUrl,
+              videoTitle: nextVideo.title,
+              status: 'parlay',
+            },
+          });
+          
+          await prisma.room.update({
+            where: { id: room.id },
+            data: { status: 'parlay' },
+          });
+          
+          await prisma.videoQueue.delete({ where: { id: nextVideo.id } });
+          
+          const remaining = await prisma.videoQueue.findMany({
+            where: { roomId: room.id },
+            orderBy: { order: 'asc' },
+          });
+          
+          io.to(`room:${roomCode}`).emit('round:started', { round: newRound });
+          io.to(`room:${roomCode}`).emit('round:status', { status: 'parlay' });
+          io.to(`room:${roomCode}`).emit('queue:updated', { videos: remaining });
+        } else {
+          // No more videos - end game
+          await prisma.room.update({
+            where: { id: room.id },
+            data: { status: 'results' },
+          });
+          
+          io.to(`room:${roomCode}`).emit('round:status', { status: 'results' });
+        }
+      } catch (error) {
+        console.error('Error ending round:', error);
+        socket.emit('error', { message: 'Failed to end round' });
       }
     });
 

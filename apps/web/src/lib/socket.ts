@@ -15,16 +15,22 @@ export function useSocket(roomCode: string) {
     const newSocket: TypedSocket = io(serverUrl, {
       query: { roomCode },
       transports: ['websocket', 'polling'],
+      forceNew: true, // Force new connection to avoid stale state
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket connected');
+      console.log('Socket connected to room:', roomCode);
       setConnected(true);
     });
 
     newSocket.on('disconnect', () => {
       console.log('Socket disconnected');
       setConnected(false);
+    });
+
+    newSocket.on('reconnect', () => {
+      console.log('Socket reconnected');
+      setConnected(true);
     });
 
     socketRef.current = newSocket;
