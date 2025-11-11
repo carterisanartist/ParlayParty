@@ -33,11 +33,11 @@ describe('Game Logic Tests', () => {
       const mockTVideoSec = 120;
 
       // Test that scoring function exists and returns a result
-      const result = await calculateEventScore(mockEventText, 'round-1', mockPlayerId, mockTVideoSec);
+      const result = await calculateEventScore('round-1', mockEventText, mockPlayerId, 1.0);
       
       expect(result).toBeDefined();
-      expect(typeof result.score).toBe('number');
-      expect(result.score).toBeGreaterThanOrEqual(0);
+      expect(typeof result.totalScore).toBe('number');
+      expect(result.totalScore).toBeGreaterThanOrEqual(0);
     });
   });
 
