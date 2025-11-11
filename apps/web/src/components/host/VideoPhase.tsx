@@ -25,7 +25,7 @@ function extractTikTokId(url: string): string {
 export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   const [player, setPlayer] = useState<YouTubePlayer | null>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [pauseEvent, setPauseEvent] = useState<{ text: string; voters: string[] } | null>(null);
+  const [pauseEvent, setPauseEvent] = useState<{ text: string; voters: string[]; punishment?: string; callerName?: string; writerName?: string } | null>(null);
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [eventCount, setEventCount] = useState(0);
   const [videoEnded, setVideoEnded] = useState(false);
@@ -34,12 +34,12 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
-    socket.on('video:pause_auto', ({ tCenter, normalizedText, voters }) => {
+    socket.on('video:pause_auto', ({ tCenter, normalizedText, voters, punishment, callerName, writerName }) => {
       if (player) {
         player.pauseVideo();
         player.seekTo(tCenter, true);
         setIsPaused(true);
-        setPauseEvent({ text: normalizedText, voters });
+        setPauseEvent({ text: normalizedText, voters, punishment, callerName, writerName });
       }
     });
 
@@ -317,6 +317,9 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
       <CinematicPause
         isVisible={isPaused && !!pauseEvent}
         eventText={pauseEvent?.text || ''}
+        punishment={pauseEvent?.punishment}
+        callerName={pauseEvent?.callerName}
+        writerName={pauseEvent?.writerName}
       />
 
       {videoEnded && (

@@ -19,7 +19,7 @@ export interface RoomSettings {
 export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   voteWindowSec: 3,
   consensusThresholdPct: 0.5,
-  minVotes: 3,
+  minVotes: 1,
   cooldownPerTextSec: 6,
   fastTapWindow: 1.0,
   twoPlayerMode: 'unanimous',
@@ -78,6 +78,7 @@ export interface Parlay {
   playerId: string;
   text: string;
   normalizedText: string;
+  punishment?: string;
   lockedAt: Date;
   completedAt?: Date;
   scoreRaw: number;

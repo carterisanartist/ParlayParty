@@ -90,6 +90,7 @@ model Parlay {
   playerId       String
   text           String
   normalizedText String
+  punishment     String?
   lockedAt       DateTime  @default(now())
   completedAt    DateTime?
   scoreRaw       Float     @default(0)

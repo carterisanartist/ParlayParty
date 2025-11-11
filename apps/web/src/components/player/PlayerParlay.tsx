@@ -14,6 +14,7 @@ interface PlayerParlayProps {
 
 export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
   const [parlayText, setParlayText] = useState('');
+  const [punishment, setPunishment] = useState('');
   const [isLocked, setIsLocked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,7 +53,10 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
     if (!parlayText.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    socket.emit('parlay:submit', { text: parlayText.trim() });
+    socket.emit('parlay:submit', { 
+      text: parlayText.trim(),
+      punishment: punishment.trim() || undefined,
+    });
     
     setTimeout(() => {
       setIsLocked(true);
@@ -112,12 +116,29 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
               onChange={(e) => setParlayText(e.target.value)}
               placeholder={`e.g., "${randomExample}"`}
               maxLength={200}
-              rows={4}
+              rows={3}
               autoFocus
               className="input-neon resize-none text-lg"
             />
             <p className="text-xs text-fg-subtle mt-2 text-right">
               {parlayText.length}/200
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-3 text-fg-subtle">
+              PUNISHMENT (what to smoke/drink if this happens)
+            </label>
+            <input
+              type="text"
+              value={punishment}
+              onChange={(e) => setPunishment(e.target.value)}
+              placeholder='e.g., "2 shots" or "3 hits"'
+              maxLength={50}
+              className="input-neon text-lg"
+            />
+            <p className="text-xs text-fg-subtle mt-2 text-right">
+              {punishment.length}/50
             </p>
           </div>
 

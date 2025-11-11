@@ -7,10 +7,13 @@ import { audioManager } from '@/lib/audio';
 interface CinematicPauseProps {
   isVisible: boolean;
   eventText: string;
+  punishment?: string;
+  callerName?: string;
+  writerName?: string;
   onComplete?: () => void;
 }
 
-export function CinematicPause({ isVisible, eventText, onComplete }: CinematicPauseProps) {
+export function CinematicPause({ isVisible, eventText, punishment, callerName, writerName, onComplete }: CinematicPauseProps) {
   useEffect(() => {
     if (isVisible) {
       audioManager.playPauseBoom();
@@ -61,16 +64,43 @@ export function CinematicPause({ isVisible, eventText, onComplete }: CinematicPa
               transition={{ delay: 0.4 }}
               className="text-3xl md:text-5xl text-accent-2 glow-pink font-semibold"
             >
-              {eventText}
+              "{eventText}"
             </motion.p>
+            
+            {(callerName || writerName) && (
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-lg text-fg-subtle space-y-1"
+              >
+                {callerName && <p>Called by: <span className="text-accent-1">{callerName}</span></p>}
+                {writerName && <p>Written by: <span className="text-accent-3">{writerName}</span></p>}
+              </motion.div>
+            )}
+            
+            {punishment && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.8 }}
+                className="card-neon p-6 bg-warning/10"
+              >
+                <p className="text-sm text-warning mb-2">PUNISHMENT:</p>
+                <p className="text-4xl font-display glow-pink tracking-wider">
+                  {punishment}
+                </p>
+                <p className="text-sm text-fg-subtle mt-2">(Everyone does this!)</p>
+              </motion.div>
+            )}
             
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 1.0 }}
               className="text-fg-subtle text-xl"
             >
-              Resuming in 3...
+              Resuming in 20...
             </motion.div>
           </div>
         </motion.div>

@@ -12,10 +12,10 @@ export function SoloVerificationHelper({ socket }: SoloVerificationHelperProps) 
     // Auto-respond TRUE to own verification requests in solo mode
     socket.on('vote:verify', ({ voteId }) => {
       console.log('Solo mode: Auto-approving own vote');
-      // Wait 2 seconds then auto-approve (simulate thinking)
+      // Wait 1 second then auto-approve (faster for testing)
       setTimeout(() => {
         socket.emit('vote:respond', { voteId, agree: true });
-      }, 2000);
+      }, 1000);
     });
 
     return () => {

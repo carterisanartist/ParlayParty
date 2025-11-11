@@ -307,7 +307,7 @@ export function setupSocketHandlers(io: Server) {
       }
     });
     
-    socket.on('parlay:submit', async ({ text }) => {
+    socket.on('parlay:submit', async ({ text, punishment }) => {
       try {
         const { roomCode, playerId } = data;
         if (!roomCode || !playerId) return;
@@ -330,7 +330,7 @@ export function setupSocketHandlers(io: Server) {
         if (existingParlay) {
           await prisma.parlay.update({
             where: { id: existingParlay.id },
-            data: { text, normalizedText: normalized },
+            data: { text, normalizedText: normalized, punishment },
           });
         } else {
           await prisma.parlay.create({
@@ -339,6 +339,7 @@ export function setupSocketHandlers(io: Server) {
               playerId,
               text,
               normalizedText: normalized,
+              punishment,
             },
           });
         }
@@ -425,7 +426,7 @@ export function setupSocketHandlers(io: Server) {
         const player = await prisma.player.findUnique({ where: { id: playerId } });
         const correctedTime = tVideoSec - (player?.latencyMs || 0) / 2000;
         
-        await prisma.vote.create({
+        const vote = await prisma.vote.create({
           data: {
             roundId: round.id,
             playerId,
@@ -434,43 +435,28 @@ export function setupSocketHandlers(io: Server) {
           },
         });
         
-        const allVotes = await prisma.vote.findMany({
-          where: { roundId: round.id },
-          orderBy: { createdAt: 'desc' },
-          take: 100,
+        // Get parlay with punishment
+        const parlay = await prisma.parlay.findFirst({
+          where: { roundId: round.id, normalizedText },
+          include: { player: true },
         });
         
-        const players = await prisma.player.findMany({ where: { roomId: room.id } });
-        const settings = room.settings as any as RoomSettings;
+        const caller = await prisma.player.findUnique({ where: { id: playerId } });
+        const allPlayers = await prisma.player.findMany({ where: { roomId: room.id } });
+        const otherPlayers = allPlayers.filter(p => p.id !== playerId);
         
-        if (players.length === 2) {
-          const cluster = checkTwoPlayerConsensus(
-            allVotes,
-            settings.twoPlayerMode,
-            players.length
-          );
-          
-          if (cluster) {
-            io.to(`room:${roomCode}`).emit('video:pause_auto', {
-              tCenter: cluster.tCenter,
-              normalizedText: cluster.normalizedText,
-              voters: cluster.voters,
-            });
-          }
-        } else {
-          const clusters = clusterVotes(allVotes, settings.voteWindowSec);
-          
-          for (const cluster of clusters) {
-            if (shouldAutoPause(cluster, players.length, settings.consensusThresholdPct, settings.minVotes)) {
-              io.to(`room:${roomCode}`).emit('video:pause_auto', {
-                tCenter: cluster.tCenter,
-                normalizedText: cluster.normalizedText,
-                voters: cluster.voters,
-              });
-              break;
-            }
-          }
-        }
+        console.log(`Vote by ${caller?.name}, sending verification to ${otherPlayers.length} players`);
+        
+        // Broadcast verification with punishment info
+        io.to(`room:${roomCode}`).except(socket.id).emit('vote:verify', {
+          callerId: playerId,
+          callerName: caller?.name || 'Someone',
+          parlayText: parlayText || normalizedText,
+          punishment: parlay?.punishment,
+          voteId: vote.id,
+        });
+        
+        console.log('Verification broadcasted');
       } catch (error) {
         console.error('Error adding vote:', error);
         socket.emit('error', { message: 'Failed to add vote' });
@@ -549,15 +535,25 @@ export function setupSocketHandlers(io: Server) {
               },
             });
             
-            // Broadcast success
+            // Get parlay and player info for display
+            const parlay = await prisma.parlay.findFirst({
+              where: { roundId: vote.roundId, normalizedText: vote.normalizedText },
+              include: { player: true },
+            });
+            
+            const caller = await prisma.player.findUnique({ where: { id: vote.playerId } });
+            
+            // Broadcast success with punishment info
             io.to(`room:${roomCode}`).emit('event:confirmed', { event: { normalizedText: vote.normalizedText } });
             io.to(`room:${roomCode}`).emit('video:pause_auto', {
               tCenter: vote.tVideoSec,
               normalizedText: vote.normalizedText,
               voters: [vote.playerId],
+              punishment: parlay?.punishment,
+              callerName: caller?.name,
+              writerName: parlay?.player?.name,
             });
             
-            const caller = await prisma.player.findUnique({ where: { id: vote.playerId } });
             const settings = room.settings as any as RoomSettings;
             const pauseDuration = (settings.pauseDurationSec || 20) * 1000;
             

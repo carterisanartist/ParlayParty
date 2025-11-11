@@ -10,8 +10,8 @@ export interface ServerToClientEvents {
   'parlay:all': (data: { parlays: any[] }) => void;
   'video:play': () => void;
   'video:pause': () => void;
-  'video:pause_auto': (data: { tCenter: number; normalizedText: string; voters: string[] }) => void;
-  'vote:verify': (data: { callerId: string; callerName: string; parlayText: string; voteId: string }) => void;
+  'video:pause_auto': (data: { tCenter: number; normalizedText: string; voters: string[]; punishment?: string; callerName?: string; writerName?: string }) => void;
+  'vote:verify': (data: { callerId: string; callerName: string; parlayText: string; punishment?: string; voteId: string }) => void;
   'video:seek': (data: { tVideoSec: number }) => void;
   'video:resume': () => void;
   'marker:added': (data: { marker: Marker }) => void;
@@ -36,7 +36,7 @@ export interface ClientToServerEvents {
   'queue:remove': (data: { videoId: string }) => void;
   'host:startRound': (data: { videoType: string; videoUrl?: string; videoId?: string; videoTitle?: string }) => void;
   'host:startFromQueue': () => void;
-  'parlay:submit': (data: { text: string }) => void;
+  'parlay:submit': (data: { text: string; punishment?: string }) => void;
   'parlay:lock': () => void;
   'vote:add': (data: { tVideoSec: number; normalizedText: string; parlayText: string }) => void;
   'vote:respond': (data: { voteId: string; agree: boolean }) => void;
