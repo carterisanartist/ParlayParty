@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import YouTube, { YouTubePlayer } from 'react-youtube';
 import { motion } from 'framer-motion';
 import { CinematicPause } from '../CinematicPause';
+import { GameOverModal } from '../GameOverModal';
 import { Scoreboard } from '../Scoreboard';
 import { EventLog } from './EventLog';
 import { LiveScoreboard } from './LiveScoreboard';
@@ -32,11 +33,21 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   const [markers, setMarkers] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [pausedPosition, setPausedPosition] = useState<number>(0);
+  const [gameOver, setGameOver] = useState<{
+    finalScores: { id: string; name: string; scoreTotal: number }[];
+    winner: { id: string; name: string; scoreTotal: number } | null;
+  } | null>(null);
 
   useEffect(() => {
     socket.on('video:pause_auto', ({ tCenter, normalizedText, voters, punishment, callerName, writerName }) => {
       console.log('🖥️ HOST: Received video:pause_auto', { normalizedText, punishment, callerName, writerName });
       if (player) {
+        // Save current position before pausing
+        const currentPos = player.getCurrentTime();
+        setPausedPosition(currentPos);
+        console.log('📍 Saved pause position:', currentPos);
+        
         player.pauseVideo();
         player.seekTo(tCenter, true);
         setIsPaused(true);
@@ -81,6 +92,11 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
 
     socket.on('marker:added', ({ marker }) => {
       setMarkers((prev) => [...prev, marker]);
+    });
+
+    socket.on('game:over', ({ finalScores, winner }) => {
+      console.log('🏆 Game Over received:', { finalScores, winner });
+      setGameOver({ finalScores, winner });
     });
 
     return () => {
@@ -319,6 +335,27 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
         punishment={pauseEvent?.punishment}
         callerName={pauseEvent?.callerName}
         writerName={pauseEvent?.writerName}
+        onComplete={() => {
+          setPauseEvent(null);
+          setIsPaused(false);
+          
+          // Resume from saved position
+          if (player && pausedPosition > 0) {
+            console.log('▶️ Resuming from position:', pausedPosition);
+            player.seekTo(pausedPosition, true);
+            player.playVideo();
+          }
+        }}
+      />
+
+      <GameOverModal
+        isVisible={!!gameOver}
+        finalScores={gameOver?.finalScores || []}
+        winner={gameOver?.winner || null}
+        onNewGame={() => {
+          setGameOver(null);
+          window.location.href = '/';
+        }}
       />
 
       {videoEnded && (
