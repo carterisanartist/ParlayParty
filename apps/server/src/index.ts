@@ -220,7 +220,7 @@ async function bootstrap() {
   
   await databaseManager.connect();
   
-  httpServer.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(Number(PORT), '0.0.0.0', () => {
     logger.info('Server started', {
       host: '0.0.0.0',
       port: PORT,

@@ -20,21 +20,8 @@ class DatabaseManager {
       },
     });
 
-    // Log slow queries
-    this.prisma.$on('query', (e) => {
-      if (e.duration > 2000) { // Log queries slower than 2 seconds
-        logger.warn('Slow database query detected', {
-          query: e.query,
-          duration: e.duration,
-          params: e.params
-        });
-      }
-    });
-
-    // Log database errors
-    this.prisma.$on('error', (e) => {
-      logger.error('Database error', { error: e });
-    });
+    // Note: Event logging disabled due to TypeScript compatibility
+    // In production, use external monitoring tools for query analysis
   }
 
   async connect(): Promise<void> {

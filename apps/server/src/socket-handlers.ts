@@ -167,7 +167,7 @@ export function setupSocketHandlers(io: Server) {
         
         // Get all players to check if solo
         const allPlayers = await prisma.player.findMany({ where: { roomId: room!.id } });
-        const otherPlayers = allPlayers.filter(p => p.id !== playerId);
+        const otherPlayers = allPlayers.filter((p: any) => p.id !== playerId);
         
         console.log(`🎮 Room has ${allPlayers.length} players, ${otherPlayers.length} others`);
         
@@ -337,7 +337,7 @@ export function setupSocketHandlers(io: Server) {
         });
         
         // Convert to plain objects
-        const parlaysToSend = allParlays.map(p => ({
+        const parlaysToSend = allParlays.map((p: any) => ({
           id: p.id,
           text: p.text,
           normalizedText: p.normalizedText,
@@ -531,7 +531,7 @@ export function setupSocketHandlers(io: Server) {
           where: { roundId: round.id, isUsed: false },
         });
         
-        const parlaysToSend = allParlays.map(p => ({
+        const parlaysToSend = allParlays.map((p: any) => ({
           id: p.id,
           text: p.text,
           normalizedText: p.normalizedText,
