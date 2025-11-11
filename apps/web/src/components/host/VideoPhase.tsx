@@ -47,6 +47,7 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [pausedPosition, setPausedPosition] = useState<number>(0);
+  const playerRef = useRef<YouTubePlayer | null>(null);
   const [gameOver, setGameOver] = useState<{
     finalScores: { id: string; name: string; scoreTotal: number }[];
     winner: { id: string; name: string; scoreTotal: number } | null;
@@ -55,16 +56,20 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   useEffect(() => {
     socket.on('video:pause_auto', ({ tCenter, normalizedText, voters, punishment, callerName, writerName }) => {
       console.log('🖥️ HOST: Received video:pause_auto', { normalizedText, punishment, callerName, writerName });
-      if (player) {
-        // Save current position before pausing
-        const currentPos = player.getCurrentTime();
-        setPausedPosition(currentPos);
-        console.log('📍 Saved pause position:', currentPos);
+      if (playerRef.current) {
+        // Save current position BEFORE any seeking
+        const currentPos = playerRef.current.getCurrentTime();
+        console.log('📍 Current video position:', currentPos, 'Event at:', tCenter);
         
-        player.pauseVideo();
-        player.seekTo(tCenter, true);
+        // Set the saved position for later resume
+        setPausedPosition(currentPos);
+        
+        // Pause video at current position
+        playerRef.current.pauseVideo();
         setIsPaused(true);
         setPauseEvent({ text: normalizedText, voters, punishment, callerName, writerName });
+        
+        // Don't seek during pause - keep video at current position
       }
     });
 
@@ -241,7 +246,10 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
                   controls: 1,
                 },
               }}
-              onReady={(e: any) => setPlayer(e.target)}
+              onReady={(e: any) => {
+                setPlayer(e.target);
+                playerRef.current = e.target;
+              }}
               onEnd={() => setVideoEnded(true)}
               className="w-full h-full"
             />
@@ -352,11 +360,10 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
           setPauseEvent(null);
           setIsPaused(false);
           
-          // Resume from saved position
-          if (player && pausedPosition > 0) {
-            console.log('▶️ Resuming from position:', pausedPosition);
-            player.seekTo(pausedPosition, true);
-            player.playVideo();
+          // Resume video where it was paused
+          if (playerRef.current) {
+            console.log('▶️ Resuming video at current position');
+            playerRef.current.playVideo();
           }
         }}
       />

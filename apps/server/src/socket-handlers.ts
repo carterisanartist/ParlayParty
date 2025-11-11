@@ -92,17 +92,17 @@ export function setupSocketHandlers(io: Server) {
           orderBy: { index: 'desc' },
         });
         
-        // Tyler easter egg - only for new players
-        const isNewPlayer = !await prisma.player.findFirst({
-          where: { roomId: room.id, name, id: { not: player.id } }
+        // Check if this is actually a new player (not reconnection)
+        const wasReconnection = !!await prisma.player.findFirst({
+          where: { roomId: room.id, name }
         });
         
-        if (isNewPlayer && name.toLowerCase().includes('tyler')) {
+        if (!wasReconnection && name.toLowerCase().includes('tyler')) {
           console.log('🎵 Tyler joined! Playing sound...');
           io.to(`room:${roomCode}`).emit('tyler:sound');
         }
         
-        if (isNewPlayer) {
+        if (!wasReconnection) {
           io.to(`room:${roomCode}`).emit('player:joined', { player });
         }
         

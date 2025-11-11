@@ -77,7 +77,7 @@ export default function PlayerPage() {
       
       console.log('📱 PLAYER: Join response:', {
         room: response.room.status,
-        round: response.round?.status,
+        round: response.round?.status || 'none',
         player: response.player.name
       });
       
@@ -86,11 +86,20 @@ export default function PlayerPage() {
       setRoom(response.room);
       setStatus(response.room.status as RoomStatus);
       
+      // Set round if exists
       if (response.round) {
         setCurrentRound(response.round);
       }
       
       setHasJoined(true);
+      
+      // If rejoining during video phase, request current parlays
+      if (response.room.status === 'video' && response.round) {
+        console.log('📱 PLAYER: Reconnected during video phase - requesting parlays');
+        setTimeout(() => {
+          socket.emit('player:requestParlays');
+        }, 1000);
+      }
     });
   };
 
