@@ -21,6 +21,7 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
   const [showParlayPicker, setShowParlayPicker] = useState(false);
   const [allParlays, setAllParlays] = useState<Parlay[]>([]);
   const [showVideoOnPhone, setShowVideoOnPhone] = useState(false);
+  const [videoPlayer, setVideoPlayer] = useState<any>(null);
   const videoTimeRef = useRef(0);
 
   useEffect(() => {
