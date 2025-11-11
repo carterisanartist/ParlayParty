@@ -60,9 +60,25 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
         }
       }
     } else if (videoType === 'tiktok') {
-      // Extract TikTok video ID for title
-      const match = videoUrl.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+      // Better TikTok URL handling - support multiple formats
+      let match = videoUrl.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+      if (!match) {
+        // Try vm.tiktok.com format
+        match = videoUrl.match(/vm\.tiktok\.com\/([A-Za-z0-9]+)/);
+      }
+      if (!match) {
+        // Try mobile format
+        match = videoUrl.match(/tiktok\.com\/.*\/(\d+)/);
+      }
+      
+      videoId = match ? match[1] : '';
       autoTitle = match ? `TikTok Video ${match[1]}` : 'TikTok Video';
+      
+      // Store full URL for TikTok since embed needs it
+      if (!videoId && videoUrl.includes('tiktok.com')) {
+        videoId = videoUrl; // Use full URL as ID for TikTok
+        autoTitle = 'TikTok Video';
+      }
     }
 
     socket.emit('queue:add', {

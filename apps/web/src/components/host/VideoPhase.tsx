@@ -18,8 +18,22 @@ interface VideoPhaseProps {
 }
 
 function extractTikTokId(url: string): string {
-  const match = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
-  return match ? match[1] : '';
+  // Try multiple TikTok URL formats
+  let match = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+  if (match) return match[1];
+  
+  match = url.match(/vm\.tiktok\.com\/([A-Za-z0-9]+)/);
+  if (match) return match[1];
+  
+  match = url.match(/tiktok\.com\/.*\/(\d+)/);
+  if (match) return match[1];
+  
+  // If no ID found but it's a TikTok URL, return the URL itself
+  if (url.includes('tiktok.com')) {
+    return encodeURIComponent(url);
+  }
+  
+  return '';
 }
 
 export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
