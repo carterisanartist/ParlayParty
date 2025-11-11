@@ -83,9 +83,16 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
 
     socket.emit('queue:add', {
       videoType,
-      videoUrl: videoType === 'youtube' ? undefined : videoUrl,
-      videoId: videoType === 'youtube' ? videoId : undefined,
-      title: autoTitle || undefined,
+      videoUrl: videoType === 'tiktok' ? videoUrl : undefined,
+      videoId: videoId || undefined,
+      title: title.trim() || autoTitle || undefined,
+    });
+    
+    console.log('🎥 Adding video:', {
+      type: videoType,
+      url: videoType === 'tiktok' ? videoUrl : undefined,
+      id: videoId,
+      title: title.trim() || autoTitle
     });
 
     setVideoUrl('');

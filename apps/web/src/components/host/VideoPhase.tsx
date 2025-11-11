@@ -248,10 +248,10 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
           </div>
         )}
 
-        {round.videoType === 'tiktok' && round.videoUrl && (
+        {round.videoType === 'tiktok' && (round.videoUrl || round.videoId) && (
           <div className="aspect-video bg-black rounded-xl overflow-hidden relative">
             <iframe
-              src={`https://www.tiktok.com/embed/v2/${extractTikTokId(round.videoUrl)}`}
+              src={`https://www.tiktok.com/embed/v2/${extractTikTokId(round.videoUrl || round.videoId || '')}`}
               className="w-full h-full"
               allow="encrypted-media;"
               allowFullScreen

@@ -29,10 +29,11 @@ export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatar
            lowerName === 'matt';
   };
 
-  const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080';
-  const pizzaHutLogo = `${serverUrl}/pizza-hut-logo`;
+  // Use relative URL since logo is served from same server
+  const pizzaHutLogo = '/pizza-hut-logo';
   const shouldUsePizzaHut = isPizzaHutName(player.name);
-  const avatarUrl = shouldUsePizzaHut ? pizzaHutLogo : player.avatarUrl;
+  
+  console.log('🍕 Pizza check:', { name: player.name, shouldUsePizzaHut, logoUrl: pizzaHutLogo });
 
   return (
     <motion.div
