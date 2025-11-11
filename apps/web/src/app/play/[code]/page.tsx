@@ -94,11 +94,11 @@ export default function PlayerPage() {
       setHasJoined(true);
       
       // Handle reconnection state recovery
-      if (response.parlays) {
-        console.log('📱 PLAYER: Received parlays with join response:', response.parlays);
+      if ((response as any).parlays) {
+        console.log('📱 PLAYER: Received parlays with join response:', (response as any).parlays);
         // Trigger parlay modal display for video phase
         setTimeout(() => {
-          socket.emit('parlay:all', { parlays: response.parlays });
+          socket.emit('parlay:all', { parlays: (response as any).parlays });
         }, 500);
       }
     });

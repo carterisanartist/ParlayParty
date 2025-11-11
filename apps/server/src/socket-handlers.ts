@@ -11,6 +11,14 @@ import {
 import { calculateEventScore, determineLoser } from './scoring';
 import { clusterVotes, shouldAutoPause, checkTwoPlayerConsensus } from './clustering';
 import redis from './redis';
+import { 
+  validateInput, 
+  checkRateLimit, 
+  playerJoinSchema, 
+  parlaySubmitSchema,
+  voteAddSchema 
+} from './validation';
+import { logger, gameLogger } from './logger';
 
 const prisma = new PrismaClient();
 
@@ -21,12 +29,20 @@ interface SocketData {
 
 export function setupSocketHandlers(io: Server) {
   io.on('connection', (socket: Socket) => {
-    console.log('Client connected:', socket.id);
+    logger.info('Client connected', { socketId: socket.id, timestamp: new Date().toISOString() });
     
     const data = socket.data as SocketData;
     
     socket.on('player:join', async ({ name, avatarUrl }, callback) => {
       try {
+        // Rate limiting
+        if (!checkRateLimit(socket.id, 5, 60000)) {
+          return callback({ error: 'Too many requests. Please wait.' } as any);
+        }
+
+        // Input validation
+        const validatedInput = validateInput(playerJoinSchema, { name, avatarUrl });
+        
         const roomCode = data.roomCode;
         if (!roomCode) {
           return callback({ error: 'No room code provided' } as any);
@@ -54,14 +70,13 @@ export function setupSocketHandlers(io: Server) {
         let isNewPlayer = false;
 
         if (player) {
-          console.log('🔄 Player reconnecting:', name, 'Room status:', room.status);
+          gameLogger.playerJoin(player.id, roomCode, true);
           // Update existing player
           player = await prisma.player.update({
             where: { id: player.id },
-            data: { avatarUrl },
+            data: { avatarUrl: validatedInput.avatarUrl },
           });
         } else {
-          console.log('✨ New player joining:', name);
           const existingPlayers = await prisma.player.count({ where: { roomId: room.id } });
           const isHost = existingPlayers === 0;
           
@@ -69,8 +84,8 @@ export function setupSocketHandlers(io: Server) {
           player = await prisma.player.create({
             data: {
               roomId: room.id,
-              name,
-              avatarUrl,
+              name: validatedInput.name,
+              avatarUrl: validatedInput.avatarUrl,
               isHost,
             },
           });
@@ -112,7 +127,7 @@ export function setupSocketHandlers(io: Server) {
         
         callback({ player, room, round: currentRound || undefined });
       } catch (error) {
-        console.error('Error joining room:', error);
+        gameLogger.error('Error joining room', error, { roomCode: data.roomCode, name });
         socket.emit('error', { message: 'Failed to join room' });
       }
     });
@@ -120,7 +135,16 @@ export function setupSocketHandlers(io: Server) {
     // Vote handler - SIMPLIFIED AND WORKING
     socket.on('vote:add', async ({ tVideoSec, normalizedText, parlayText }) => {
       try {
-        console.log('🎯 VOTE:ADD received from player:', data.playerId, { tVideoSec, normalizedText, parlayText });
+        // Rate limiting - stricter for votes
+        if (!checkRateLimit(socket.id, 20, 60000)) {
+          console.log('❌ Rate limit exceeded for vote:add');
+          return;
+        }
+
+        // Input validation
+        const validatedInput = validateInput(voteAddSchema, { tVideoSec, normalizedText, parlayText });
+        
+        console.log('🎯 VOTE:ADD received from player:', data.playerId, validatedInput);
         
         const { roomCode, playerId } = data;
         if (!roomCode || !playerId) {
@@ -188,7 +212,10 @@ export function setupSocketHandlers(io: Server) {
         }, (settings.pauseDurationSec || 20) * 1000);
         
       } catch (error) {
-        console.error('💥 Error in vote:add:', error);
+        gameLogger.error('Error in vote:add', error, { 
+          playerId: data.playerId, 
+          roomCode: data.roomCode 
+        });
         socket.emit('error', { message: 'Failed to add vote' });
       }
     });
