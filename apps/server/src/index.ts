@@ -11,6 +11,8 @@ import { PrismaClient } from '@prisma/client';
 import databaseManager from './database';
 import { logger } from './logger';
 import { metricsCollector } from './metrics';
+import { alertManager } from './alerts';
+import { backupManager } from './backup';
 import { setupSocketHandlers } from './socket-handlers';
 import redis from './redis';
 import { upload } from './upload';
@@ -220,7 +222,7 @@ async function bootstrap() {
   
   await databaseManager.connect();
   
-  httpServer.listen(Number(PORT), '0.0.0.0', () => {
+  httpServer.listen(Number(PORT), '0.0.0.0', async () => {
     logger.info('Server started', {
       host: '0.0.0.0',
       port: PORT,
@@ -228,6 +230,12 @@ async function bootstrap() {
       healthCheck: `/healthz`,
       timestamp: new Date().toISOString()
     });
+    
+    // Send startup alert
+    await alertManager.serverStarted(Number(PORT));
+    
+    // Start database backup scheduler
+    await backupManager.scheduleBackups();
   });
 }
 

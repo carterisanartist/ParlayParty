@@ -80,7 +80,7 @@ export default function PlayerPage() {
       socket.emit('player:join', { name }, (response) => {
       if ('error' in response) {
         console.error('Join error:', response.error);
-        setError((response as any).error || 'Failed to join room');
+        setError(String((response as any).error) || 'Failed to join room');
         setLoading(false);
         return;
       }

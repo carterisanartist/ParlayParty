@@ -1,5 +1,7 @@
 import { spawn } from 'child_process';
 import { logger } from './logger';
+import { alertManager } from './alerts';
+import * as cron from 'node-cron';
 import path from 'path';
 import fs from 'fs';
 
@@ -33,46 +35,45 @@ export class BackupManager {
         logger.error('Backup error', { error: data.toString() });
       });
 
-      pg_dump.on('close', (code) => {
+      pg_dump.on('close', async (code) => {
         if (code === 0) {
           logger.info('Database backup completed', { file: backupFile });
+          await alertManager.databaseBackupCompleted(path.basename(backupFile));
           resolve(backupFile);
         } else {
-          reject(new Error(`Backup failed with code ${code}`));
+          const error = new Error(`Backup failed with code ${code}`);
+          await alertManager.databaseBackupFailed(error);
+          reject(error);
         }
       });
     });
   }
 
   async scheduleBackups() {
-    // Schedule daily backups at 3 AM
-    const scheduleBackup = () => {
-      const now = new Date();
-      const scheduledTime = new Date();
-      scheduledTime.setHours(3, 0, 0, 0);
-      
-      if (now > scheduledTime) {
-        scheduledTime.setDate(scheduledTime.getDate() + 1);
-      }
-      
-      const timeUntilBackup = scheduledTime.getTime() - now.getTime();
-      
-      setTimeout(async () => {
+    if (process.env.NODE_ENV === 'production') {
+      // Schedule daily backups at 3:00 AM using cron
+      cron.schedule('0 3 * * *', async () => {
         try {
+          logger.info('Starting scheduled database backup');
           await this.createDatabaseBackup();
           await this.cleanupOldBackups();
         } catch (error) {
           logger.error('Scheduled backup failed', { error });
+          await alertManager.databaseBackupFailed(error);
         }
-        
-        // Schedule next backup
-        scheduleBackup();
-      }, timeUntilBackup);
-    };
-
-    if (process.env.NODE_ENV === 'production') {
-      scheduleBackup();
-      logger.info('Database backup scheduler started');
+      }, {
+        scheduled: true,
+        timezone: "America/New_York"
+      });
+      
+      logger.info('Database backup scheduler started - daily backups at 3:00 AM EST');
+      
+      // Send initial backup schedule confirmation
+      await alertManager.sendAlert({
+        title: '⏰ Backup Scheduler Active',
+        description: 'Database backups scheduled daily at 3:00 AM EST',
+        color: 3066993, // Green
+      });
     }
   }
 
