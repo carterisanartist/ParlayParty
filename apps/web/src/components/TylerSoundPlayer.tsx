@@ -13,7 +13,8 @@ export function TylerSoundPlayer({ socket }: TylerSoundPlayerProps) {
       console.log('🎵 Playing Tyler sound!');
       
       try {
-        const audio = new Audio('/api/tyler-sound');
+        const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080';
+        const audio = new Audio(`${serverUrl}/tyler-sound`);
         audio.volume = 0.5;
         audio.play().catch(console.error);
         

@@ -75,7 +75,11 @@ export function GameOverModal({ isVisible, finalScores, winner, onNewGame }: Gam
                       id: winner.id, 
                       name: winner.name, 
                       avatarUrl: null, 
-                      isHost: false 
+                      isHost: false,
+                      roomId: '',
+                      latencyMs: 0,
+                      scoreTotal: winner.scoreTotal,
+                      createdAt: new Date()
                     } as Player} 
                     size="xl" 
                     glow 
@@ -120,7 +124,11 @@ export function GameOverModal({ isVisible, finalScores, winner, onNewGame }: Gam
                           id: player.id, 
                           name: player.name, 
                           avatarUrl: null, 
-                          isHost: false 
+                          isHost: false,
+                          roomId: '',
+                          latencyMs: 0,
+                          scoreTotal: player.scoreTotal,
+                          createdAt: new Date()
                         } as Player} 
                         size="md" 
                       />

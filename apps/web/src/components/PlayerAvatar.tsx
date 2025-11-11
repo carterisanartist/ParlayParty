@@ -29,7 +29,7 @@ export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatar
            lowerName === 'matt';
   };
 
-  const pizzaHutLogo = 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Pizza_Hut_logo.svg/512px-Pizza_Hut_logo.svg.png';
+  const pizzaHutLogo = '/pizza-hut-logo';
   const shouldUsePizzaHut = isPizzaHutName(player.name);
   const avatarUrl = shouldUsePizzaHut ? pizzaHutLogo : player.avatarUrl;
 

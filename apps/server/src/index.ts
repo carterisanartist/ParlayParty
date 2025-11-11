@@ -73,6 +73,23 @@ app.get('/tyler-sound', (req, res) => {
   }
 });
 
+app.get('/pizza-hut-logo', (req, res) => {
+  try {
+    const logoPath = path.join(__dirname, '../EasterEgg/Pizza_Hut_international_logo_2014.svg.svg');
+    
+    if (!fs.existsSync(logoPath)) {
+      return res.status(404).json({ error: 'Pizza Hut logo not found' });
+    }
+    
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+    fs.createReadStream(logoPath).pipe(res);
+  } catch (error) {
+    console.error('Error serving Pizza Hut logo:', error);
+    res.status(500).json({ error: 'Failed to serve logo' });
+  }
+});
+
 app.get('/media/:roundId/:filename', async (req, res) => {
   try {
     const { roundId, filename } = req.params;
