@@ -18,14 +18,28 @@ export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatar
 
   const glowClass = glow ? 'neon-border' : 'border-2 border-fg-subtle';
 
+  // Easter egg: Bart/Matthew/Matty B gets Pizza Hut logo
+  const isPizzaHutName = (name: string) => {
+    const lowerName = name.toLowerCase().replace(/\s+/g, '');
+    return lowerName.includes('bart') || 
+           lowerName.includes('matthew') || 
+           lowerName.includes('mattyb') ||
+           lowerName.includes('mattib') ||
+           lowerName === 'matty' ||
+           lowerName === 'matt';
+  };
+
+  const pizzaHutLogo = 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d2/Pizza_Hut_logo.svg/1200px-Pizza_Hut_logo.svg.png';
+  const avatarUrl = isPizzaHutName(player.name) ? pizzaHutLogo : player.avatarUrl;
+
   return (
     <motion.div
       whileHover={{ scale: 1.1 }}
       className={`${sizeClasses[size]} ${glowClass} rounded-full flex items-center justify-center bg-bg-1 font-bold relative`}
     >
-      {player.avatarUrl ? (
+      {avatarUrl ? (
         <img
-          src={player.avatarUrl}
+          src={avatarUrl}
           alt={player.name}
           className="w-full h-full rounded-full object-cover"
         />
