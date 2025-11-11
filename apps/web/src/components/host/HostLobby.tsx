@@ -16,17 +16,10 @@ interface HostLobbyProps {
 }
 
 export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobbyProps) {
-  const [videoUrl, setVideoUrl] = useState('');
-  const [videoType, setVideoType] = useState<'youtube' | 'tiktok' | 'upload'>('youtube');
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-
   const handleStartRound = async () => {
     // Start from queue (first video)
     socket.emit('host:startFromQueue');
   };
-
-  const handleUpload = async () => {
     if (!uploadFile) return;
 
     setUploading(true);

@@ -1,34 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useSocket, measureLatency } from '@/lib/socket';
 import { audioManager } from '@/lib/audio';
-import { PlayerJoin } from '@/components/player/PlayerJoin';
-import { PlayerLobby } from '@/components/player/PlayerLobby';
-import { PlayerParlay } from '@/components/player/PlayerParlay';
-import { PlayerReveal } from '@/components/player/PlayerReveal';
-import { PlayerVideo } from '@/components/player/PlayerVideo';
-import { PlayerWheel } from '@/components/player/PlayerWheel';
-import { PlayerResults } from '@/components/player/PlayerResults';
-import { TylerSoundPlayer } from '@/components/TylerSoundPlayer';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { LoadingOverlay } from '@/components/LoadingSpinner';
-import type { Player, Room, Round, RoomStatus } from '@parlay-party/shared';
+import { useSocket, measureLatency, useGameState, useErrorHandler } from '@/hooks';
+import {
+  PlayerJoin,
+  PlayerLobby,
+  PlayerParlay,
+  PlayerReveal,
+  PlayerVideo,
+  PlayerWheel,
+  PlayerResults,
+  TylerSoundPlayer,
+  ErrorBoundary,
+  LoadingOverlay
+} from '@/components';
+import type { PlayerJoinResponse, PlayerJoinErrorResponse, ParleyResponseItem } from '@parlay-party/shared';
 
 export default function PlayerPage() {
   const params = useParams();
   const roomCode = params.code as string;
   const { socket, connected } = useSocket(roomCode);
   
-  const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
-  const [room, setRoom] = useState<Room | null>(null);
-  const [currentRound, setCurrentRound] = useState<Round | null>(null);
-  const [status, setStatus] = useState<RoomStatus>('lobby');
-  const [hasJoined, setHasJoined] = useState(false);
+  const gameState = useGameState();
+  const { error, setError, clearError } = useErrorHandler();
   const [showReveal, setShowReveal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!socket || !connected) return;
@@ -77,10 +74,10 @@ export default function PlayerPage() {
     try {
       const latency = await measureLatency(socket);
 
-      socket.emit('player:join', { name }, (response) => {
+      socket.emit('player:join', { name }, (response: PlayerJoinResponse | PlayerJoinErrorResponse) => {
       if ('error' in response) {
         console.error('Join error:', response.error);
-        setError(String((response as any).error) || 'Failed to join room');
+        setError(response.error || 'Failed to join room');
         setLoading(false);
         return;
       }
@@ -104,15 +101,13 @@ export default function PlayerPage() {
       setHasJoined(true);
       
       // Handle reconnection state recovery
-      if ((response as any).parlays) {
-        console.log('📱 PLAYER: Received parlays with join response:', (response as any).parlays);
-        // Directly set parlays for reconnection (don't emit, just set state)
+      if ('parlays' in response && response.parlays) {
+        console.log('📱 PLAYER: Received parlays with join response:', response.parlays);
+        // Directly set parlays for reconnection
         setTimeout(() => {
-          // Trigger the same handler that normally receives parlay:all
-          if ((response as any).parlays && Array.isArray((response as any).parlays)) {
-            // This will be handled by existing parlay:all listener in PlayerVideo component
-            window.dispatchEvent(new CustomEvent('reconnection-parlays', { 
-              detail: { parlays: (response as any).parlays } 
+          if (response.parlays && Array.isArray(response.parlays)) {
+            window.dispatchEvent(new CustomEvent<{ parlays: ParleyResponseItem[] }>('reconnection-parlays', { 
+              detail: { parlays: response.parlays } 
             }));
           }
         }, 500);

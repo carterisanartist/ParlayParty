@@ -36,22 +36,37 @@ function extractTikTokId(url: string): string {
   return '';
 }
 
+interface PauseEventData {
+  text: string;
+  voters: string[];
+  punishment?: string;
+  callerName?: string;
+  writerName?: string;
+}
+
+interface GameOverData {
+  finalScores: Array<{ id: string; name: string; scoreTotal: number }>;
+  winner: { id: string; name: string; scoreTotal: number } | null;
+}
+
+interface MarkerData {
+  id: string;
+  tVideoSec: number;
+  note?: string;
+}
+
 export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
   const [player, setPlayer] = useState<YouTubePlayer | null>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [pauseEvent, setPauseEvent] = useState<{ text: string; voters: string[]; punishment?: string; callerName?: string; writerName?: string } | null>(null);
+  const [pauseEvent, setPauseEvent] = useState<PauseEventData | null>(null);
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [eventCount, setEventCount] = useState(0);
   const [videoEnded, setVideoEnded] = useState(false);
-  const [markers, setMarkers] = useState<any[]>([]);
+  const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [pausedPosition, setPausedPosition] = useState<number>(0);
   const playerRef = useRef<YouTubePlayer | null>(null);
-  const [gameOver, setGameOver] = useState<{
-    finalScores: { id: string; name: string; scoreTotal: number }[];
-    winner: { id: string; name: string; scoreTotal: number } | null;
-  } | null>(null);
+  const [gameOver, setGameOver] = useState<GameOverData | null>(null);
 
   useEffect(() => {
     socket.on('video:pause_auto', ({ tCenter, normalizedText, voters, punishment, callerName, writerName }) => {
@@ -246,9 +261,9 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
                   controls: 1,
                 },
               }}
-              onReady={(e: any) => {
-                setPlayer(e.target);
-                playerRef.current = e.target;
+              onReady={(event: { target: YouTubePlayer }) => {
+                setPlayer(event.target);
+                playerRef.current = event.target;
               }}
               onEnd={() => setVideoEnded(true)}
               className="w-full h-full"

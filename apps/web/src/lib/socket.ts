@@ -43,7 +43,7 @@ export function useSocket(roomCode: string) {
 export function measureLatency(socket: TypedSocket): Promise<number> {
   return new Promise((resolve) => {
     const start = Date.now();
-    socket.emit('ping', (response) => {
+    socket.emit('ping', () => {
       const latency = Date.now() - start;
       resolve(latency);
     });

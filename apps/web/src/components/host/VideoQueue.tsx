@@ -11,7 +11,7 @@ interface VideoQueueProps {
   playerId: string;
 }
 
-export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
+export function VideoQueue({ socket }: VideoQueueProps) {
   const [videos, setVideos] = useState<VideoQueueItem[]>([]);
   const [videoUrl, setVideoUrl] = useState('');
   const [videoType, setVideoType] = useState<'youtube' | 'tiktok' | 'upload'>('youtube');
@@ -20,8 +20,8 @@ export function VideoQueue({ socket, roomCode, playerId }: VideoQueueProps) {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    socket.on('queue:updated', ({ videos: updatedVideos }) => {
-      setVideos(updatedVideos.sort((a: any, b: any) => a.order - b.order));
+    socket.on('queue:updated', ({ videos: updatedVideos }: { videos: VideoQueueItem[] }) => {
+      setVideos(updatedVideos.sort((a, b) => a.order - b.order));
     });
 
     return () => {

@@ -61,9 +61,6 @@ export class BackupManager {
           logger.error('Scheduled backup failed', { error });
           await alertManager.databaseBackupFailed(error);
         }
-      }, {
-        scheduled: true,
-        timezone: "America/New_York"
       });
       
       logger.info('Database backup scheduler started - daily backups at 3:00 AM EST');

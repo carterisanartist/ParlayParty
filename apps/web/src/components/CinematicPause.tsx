@@ -1,7 +1,7 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
 import { audioManager } from '@/lib/audio';
 
 interface CinematicPauseProps {
@@ -13,7 +13,7 @@ interface CinematicPauseProps {
   onComplete?: () => void;
 }
 
-export function CinematicPause({ isVisible, eventText, punishment, callerName, writerName, onComplete }: CinematicPauseProps) {
+export const CinematicPause = React.memo<CinematicPauseProps>(({ isVisible, eventText, punishment, callerName, writerName, onComplete }) => {
   const [countdown, setCountdown] = useState(20);
 
   useEffect(() => {
@@ -117,5 +117,5 @@ export function CinematicPause({ isVisible, eventText, punishment, callerName, w
       )}
     </AnimatePresence>
   );
-}
+});
 

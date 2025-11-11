@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { Player } from '@parlay-party/shared';
 
@@ -9,7 +10,7 @@ interface PlayerAvatarProps {
   glow?: boolean;
 }
 
-export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatarProps) {
+export const PlayerAvatar = React.memo<PlayerAvatarProps>(({ player, size = 'md', glow = false }) => {
   const sizeClasses = {
     sm: 'w-12 h-12 text-lg',
     md: 'w-16 h-16 text-2xl',
@@ -69,5 +70,5 @@ export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatar
       )}
     </motion.div>
   );
-}
+});
 
