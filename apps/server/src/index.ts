@@ -57,6 +57,22 @@ app.post('/upload', upload.single('video'), async (req, res) => {
   }
 });
 
+app.get('/tyler-sound', (req, res) => {
+  try {
+    const soundPath = path.join(__dirname, '../EasterEgg/My Song 8.wav');
+    
+    if (!fs.existsSync(soundPath)) {
+      return res.status(404).json({ error: 'Tyler sound not found' });
+    }
+    
+    res.setHeader('Content-Type', 'audio/wav');
+    fs.createReadStream(soundPath).pipe(res);
+  } catch (error) {
+    console.error('Error serving Tyler sound:', error);
+    res.status(500).json({ error: 'Failed to serve sound' });
+  }
+});
+
 app.get('/media/:roundId/:filename', async (req, res) => {
   try {
     const { roundId, filename } = req.params;

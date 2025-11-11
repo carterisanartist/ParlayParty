@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { audioManager } from '@/lib/audio';
 
 interface CinematicPauseProps {
@@ -14,15 +14,25 @@ interface CinematicPauseProps {
 }
 
 export function CinematicPause({ isVisible, eventText, punishment, callerName, writerName, onComplete }: CinematicPauseProps) {
+  const [countdown, setCountdown] = useState(20);
+
   useEffect(() => {
     if (isVisible) {
       audioManager.playPauseBoom();
       
-      const timer = setTimeout(() => {
-        onComplete?.();
-      }, 3000);
+      setCountdown(20);
+      const interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            onComplete?.();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
       
-      return () => clearTimeout(timer);
+      return () => clearInterval(interval);
     }
   }, [isVisible, onComplete]);
 
@@ -100,7 +110,7 @@ export function CinematicPause({ isVisible, eventText, punishment, callerName, w
               transition={{ delay: 1.0 }}
               className="text-fg-subtle text-xl"
             >
-              Resuming in 20...
+              Resuming in {countdown}...
             </motion.div>
           </div>
         </motion.div>

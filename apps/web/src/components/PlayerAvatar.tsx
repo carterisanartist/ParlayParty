@@ -29,8 +29,9 @@ export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatar
            lowerName === 'matt';
   };
 
-  const pizzaHutLogo = 'https://logos-world.net/wp-content/uploads/2020/11/Pizza-Hut-Logo.png';
-  const avatarUrl = isPizzaHutName(player.name) ? pizzaHutLogo : player.avatarUrl;
+  const pizzaHutLogo = 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Pizza_Hut_logo.svg/512px-Pizza_Hut_logo.svg.png';
+  const shouldUsePizzaHut = isPizzaHutName(player.name);
+  const avatarUrl = shouldUsePizzaHut ? pizzaHutLogo : player.avatarUrl;
 
   return (
     <motion.div
@@ -42,11 +43,22 @@ export function PlayerAvatar({ player, size = 'md', glow = false }: PlayerAvatar
           src={avatarUrl}
           alt={player.name}
           className="w-full h-full rounded-full object-cover"
+          onError={(e) => {
+            // Fallback to initials if image fails to load
+            if (shouldUsePizzaHut) {
+              console.log('Pizza Hut logo failed to load for', player.name);
+              e.currentTarget.style.display = 'none';
+            }
+          }}
         />
       ) : (
         <span className="text-accent-1">
           {player.name.charAt(0).toUpperCase()}
         </span>
+      )}
+      
+      {shouldUsePizzaHut && !avatarUrl && (
+        <span className="text-2xl">🍕</span>
       )}
       
       {player.isHost && (

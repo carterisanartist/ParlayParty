@@ -12,6 +12,7 @@ import { VideoPhase } from '@/components/host/VideoPhase';
 import { ReviewPhase } from '@/components/host/ReviewPhase';
 import { WheelPhase } from '@/components/host/WheelPhase';
 import { ResultsPhase } from '@/components/host/ResultsPhase';
+import { TylerSoundPlayer } from '@/components/TylerSoundPlayer';
 import type { Player, Room, Round, RoomStatus } from '@parlay-party/shared';
 
 export default function HostPage() {
@@ -159,6 +160,8 @@ export default function HostPage() {
           />
         )}
       </div>
+      
+      <TylerSoundPlayer socket={socket} />
     </VFXLayer>
   );
 }

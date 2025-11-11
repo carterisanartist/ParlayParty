@@ -11,6 +11,7 @@ import { PlayerReveal } from '@/components/player/PlayerReveal';
 import { PlayerVideo } from '@/components/player/PlayerVideo';
 import { PlayerWheel } from '@/components/player/PlayerWheel';
 import { PlayerResults } from '@/components/player/PlayerResults';
+import { TylerSoundPlayer } from '@/components/TylerSoundPlayer';
 import type { Player, Room, Round, RoomStatus } from '@parlay-party/shared';
 
 export default function PlayerPage() {
@@ -150,6 +151,8 @@ export default function PlayerPage() {
       {status === 'results' && (
         <PlayerResults player={currentPlayer} />
       )}
+      
+      <TylerSoundPlayer socket={socket} />
     </div>
   );
 }

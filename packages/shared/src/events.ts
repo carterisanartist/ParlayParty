@@ -27,6 +27,7 @@ export interface ServerToClientEvents {
   'player:joined': (data: { player: Player }) => void;
   'error': (data: { message: string }) => void;
   'queue:updated': (data: { videos: VideoQueueItem[] }) => void;
+  'tyler:sound': () => void;
 }
 
 export interface ClientToServerEvents {

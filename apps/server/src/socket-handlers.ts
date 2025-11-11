@@ -74,6 +74,12 @@ export function setupSocketHandlers(io: Server) {
           orderBy: { index: 'desc' },
         });
         
+        // Tyler easter egg - play sound
+        if (name.toLowerCase().includes('tyler')) {
+          console.log('🎵 Tyler joined! Playing sound...');
+          io.to(`room:${roomCode}`).emit('tyler:sound');
+        }
+        
         io.to(`room:${roomCode}`).emit('player:joined', { player });
         
         const allPlayers = await prisma.player.findMany({ where: { roomId: room.id } });
