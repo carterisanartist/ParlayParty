@@ -16,7 +16,7 @@ import {
   ErrorBoundary,
   LoadingOverlay
 } from '@/components';
-import type { PlayerJoinResponse, PlayerJoinErrorResponse, ParleyResponseItem } from '@parlay-party/shared';
+import type { Player, Room, Round, RoomStatus, PlayerJoinResponse, PlayerJoinErrorResponse, ParleyResponseItem } from '@parlay-party/shared';
 
 export default function PlayerPage() {
   const params = useParams();
