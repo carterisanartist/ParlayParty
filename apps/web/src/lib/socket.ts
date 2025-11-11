@@ -28,7 +28,7 @@ export function useSocket(roomCode: string) {
       setConnected(false);
     });
 
-    newSocket.on('reconnect', () => {
+    newSocket.on('connect', () => {
       console.log('Socket reconnected');
       setConnected(true);
     });
