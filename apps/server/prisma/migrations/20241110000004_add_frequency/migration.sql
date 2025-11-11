@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Parlay" ADD COLUMN "frequency" TEXT NOT NULL DEFAULT 'once';
+ALTER TABLE "Parlay" ADD COLUMN "isUsed" BOOLEAN NOT NULL DEFAULT false;

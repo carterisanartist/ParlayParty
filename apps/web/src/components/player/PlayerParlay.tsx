@@ -15,6 +15,7 @@ interface PlayerParlayProps {
 export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
   const [parlayText, setParlayText] = useState('');
   const [punishment, setPunishment] = useState('');
+  const [frequency, setFrequency] = useState<'once' | 'multiple'>('once');
   const [isLocked, setIsLocked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,6 +57,7 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
     socket.emit('parlay:submit', { 
       text: parlayText.trim(),
       punishment: punishment.trim() || undefined,
+      frequency,
     });
     
     setTimeout(() => {
@@ -139,6 +141,36 @@ export function PlayerParlay({ socket, round, player }: PlayerParlayProps) {
             />
             <p className="text-xs text-fg-subtle mt-2 text-right">
               {punishment.length}/50
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-3 text-fg-subtle">
+              HOW OFTEN CAN THIS HAPPEN?
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setFrequency('once')}
+                className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+                  frequency === 'once' ? 'btn-neon-pink' : 'bg-bg-0 text-fg-subtle border border-fg-subtle/30'
+                }`}
+              >
+                ONCE ONLY
+              </button>
+              <button
+                onClick={() => setFrequency('multiple')}
+                className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+                  frequency === 'multiple' ? 'btn-neon-pink' : 'bg-bg-0 text-fg-subtle border border-fg-subtle/30'
+                }`}
+              >
+                MULTIPLE TIMES
+              </button>
+            </div>
+            <p className="text-xs text-fg-subtle mt-2">
+              {frequency === 'once' 
+                ? 'Removed from list after first hit' 
+                : 'Can be selected multiple times'
+              }
             </p>
           </div>
 

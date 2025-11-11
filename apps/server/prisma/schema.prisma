@@ -91,6 +91,8 @@ model Parlay {
   text           String
   normalizedText String
   punishment     String?
+  frequency      String    @default("once")
+  isUsed         Boolean   @default(false)
   lockedAt       DateTime  @default(now())
   completedAt    DateTime?
   scoreRaw       Float     @default(0)

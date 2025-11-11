@@ -36,7 +36,7 @@ export interface ClientToServerEvents {
   'queue:remove': (data: { videoId: string }) => void;
   'host:startRound': (data: { videoType: string; videoUrl?: string; videoId?: string; videoTitle?: string }) => void;
   'host:startFromQueue': () => void;
-  'parlay:submit': (data: { text: string; punishment?: string }) => void;
+  'parlay:submit': (data: { text: string; punishment?: string; frequency?: string }) => void;
   'parlay:lock': () => void;
   'vote:add': (data: { tVideoSec: number; normalizedText: string; parlayText: string }) => void;
   'vote:respond': (data: { voteId: string; agree: boolean }) => void;

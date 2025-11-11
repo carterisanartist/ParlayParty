@@ -126,6 +126,15 @@ export function setupSocketHandlers(io: Server) {
           include: { player: true },
         });
         
+        // Mark as used if "once" frequency
+        if (punishmentParlay?.frequency === 'once') {
+          await prisma.parlay.update({
+            where: { id: punishmentParlay.id },
+            data: { isUsed: true },
+          });
+          console.log('✅ Marked parlay as used (once only)');
+        }
+        
         const caller = await prisma.player.findUnique({ where: { id: playerId } });
         
         console.log('✅ Awarding point and broadcasting pause');
@@ -193,7 +202,7 @@ export function setupSocketHandlers(io: Server) {
       }
     });
 
-    socket.on('parlay:submit', async ({ text, punishment }) => {
+    socket.on('parlay:submit', async ({ text, punishment, frequency }) => {
       try {
         const { roomCode, playerId } = data;
         if (!roomCode || !playerId) return;
@@ -216,7 +225,7 @@ export function setupSocketHandlers(io: Server) {
         if (existingParlay) {
           await prisma.parlay.update({
             where: { id: existingParlay.id },
-            data: { text, normalizedText: normalized, punishment },
+            data: { text, normalizedText: normalized, punishment, frequency: frequency || 'once' },
           });
         } else {
           await prisma.parlay.create({
@@ -226,6 +235,7 @@ export function setupSocketHandlers(io: Server) {
               text,
               normalizedText: normalized,
               punishment,
+              frequency: frequency || 'once',
             },
           });
         }
@@ -360,7 +370,7 @@ export function setupSocketHandlers(io: Server) {
         if (!round) return;
         
         const allParlays = await prisma.parlay.findMany({
-          where: { roundId: round.id },
+          where: { roundId: round.id, isUsed: false },
         });
         
         const parlaysToSend = allParlays.map(p => ({

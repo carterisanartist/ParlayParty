@@ -79,6 +79,8 @@ export interface Parlay {
   text: string;
   normalizedText: string;
   punishment?: string;
+  frequency: 'once' | 'multiple';
+  isUsed: boolean;
   lockedAt: Date;
   completedAt?: Date;
   scoreRaw: number;
