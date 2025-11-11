@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
+import databaseManager from './database';
 import {
   normalizeText,
   generateRoomCode,
@@ -20,7 +21,7 @@ import {
 } from './validation';
 import { logger, gameLogger } from './logger';
 
-const prisma = new PrismaClient();
+const prisma = databaseManager.getClient();
 
 interface SocketData {
   roomCode?: string;

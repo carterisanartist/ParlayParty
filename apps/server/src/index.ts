@@ -8,6 +8,9 @@ import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
 import { PrismaClient } from '@prisma/client';
+import databaseManager from './database';
+import { logger } from './logger';
+import { metricsCollector } from './metrics';
 import { setupSocketHandlers } from './socket-handlers';
 import redis from './redis';
 import { upload } from './upload';
@@ -16,15 +19,32 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? false : '*',
+    origin: process.env.NODE_ENV === 'production' 
+      ? ['https://parlay-party.fly.dev', 'https://www.parlay-party.fly.dev']
+      : '*',
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
-const prisma = new PrismaClient();
+const prisma = databaseManager.getClient();
 const PORT = process.env.PORT || 8080;
 
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "https:", "data:", "blob:"],
+      mediaSrc: ["'self'", "https:", "data:", "blob:"],
+      scriptSrc: ["'self'", "'unsafe-eval'", "https://www.youtube.com", "https://s.ytimg.com"],
+      frameSrc: ["'self'", "https://www.youtube.com", "https://www.tiktok.com"],
+      connectSrc: ["'self'", "wss:", "https:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(compression());
 app.use(cors());
 app.use(express.json());
@@ -143,6 +163,15 @@ io.use((socket, next) => {
 
 setupSocketHandlers(io);
 
+// Track socket connections for metrics
+io.on('connection', (socket) => {
+  metricsCollector.incrementConnections();
+  
+  socket.on('disconnect', () => {
+    metricsCollector.decrementConnections();
+  });
+});
+
 const webBuildDir = path.resolve(__dirname, '../../web/.next');
 const webPublicDir = path.resolve(__dirname, '../../web/public');
 
@@ -189,19 +218,49 @@ async function bootstrap() {
     console.error('Migration failed:', error);
   }
   
-  await prisma.$connect();
-  console.log('Database connected');
+  await databaseManager.connect();
   
   httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on 0.0.0.0:${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/healthz`);
-    console.log(`Production ready: App accessible from external traffic`);
+    logger.info('Server started', {
+      host: '0.0.0.0',
+      port: PORT,
+      environment: process.env.NODE_ENV,
+      healthCheck: `/healthz`,
+      timestamp: new Date().toISOString()
+    });
   });
 }
 
 bootstrap().catch((error) => {
-  console.error('Failed to start server:', error);
+  logger.error('Failed to start server', { error });
   process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, starting graceful shutdown');
+  
+  try {
+    await databaseManager.disconnect();
+    await redis.quit();
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error during shutdown', { error });
+    process.exit(1);
+  }
+});
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received, starting graceful shutdown');
+  
+  try {
+    await databaseManager.disconnect();
+    await redis.quit();
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error during shutdown', { error });
+    process.exit(1);
+  }
 });
 
 process.on('SIGTERM', async () => {
