@@ -93,12 +93,13 @@ export default function PlayerPage() {
       
       setHasJoined(true);
       
-      // If rejoining during video phase, request current parlays
-      if (response.room.status === 'video' && response.round) {
-        console.log('📱 PLAYER: Reconnected during video phase - requesting parlays');
+      // Handle reconnection state recovery
+      if (response.parlays) {
+        console.log('📱 PLAYER: Received parlays with join response:', response.parlays);
+        // Trigger parlay modal display for video phase
         setTimeout(() => {
-          socket.emit('player:requestParlays');
-        }, 1000);
+          socket.emit('parlay:all', { parlays: response.parlays });
+        }, 500);
       }
     });
   };
