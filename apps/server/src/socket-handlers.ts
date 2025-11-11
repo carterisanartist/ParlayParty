@@ -401,26 +401,27 @@ export function setupSocketHandlers(io: Server) {
     
     socket.on('vote:add', async ({ tVideoSec, normalizedText, parlayText }) => {
       try {
+        console.log('🎯 VOTE:ADD received', { tVideoSec, normalizedText, parlayText, playerId: data.playerId });
+        
         const { roomCode, playerId } = data;
-        if (!roomCode || !playerId) return;
+        if (!roomCode || !playerId) {
+          console.log('❌ No roomCode or playerId');
+          return;
+        }
         
         const room = await prisma.room.findUnique({ where: { code: roomCode } });
-        if (!room) return;
+        if (!room) {
+          console.log('❌ Room not found');
+          return;
+        }
         
         const round = await prisma.round.findFirst({
           where: { roomId: room.id, status: 'video' },
           orderBy: { index: 'desc' },
         });
-        if (!round) return;
-        
-        const recentVote = await prisma.vote.findFirst({
-          where: { roundId: round.id, playerId },
-          orderBy: { createdAt: 'desc' },
-        });
-        
-        if (recentVote) {
-          const timeSinceLastVote = Date.now() - recentVote.createdAt.getTime();
-          if (timeSinceLastVote < 2000) return;
+        if (!round) {
+          console.log('❌ No active video round');
+          return;
         }
         
         const player = await prisma.player.findUnique({ where: { id: playerId } });
@@ -435,8 +436,10 @@ export function setupSocketHandlers(io: Server) {
           },
         });
         
-        // Get parlay with punishment
-        const parlay = await prisma.parlay.findFirst({
+        console.log('✅ Vote created:', vote.id);
+        
+        // Get parlay with punishment and player
+        const parlayWithInfo = await prisma.parlay.findFirst({
           where: { roundId: round.id, normalizedText },
           include: { player: true },
         });
@@ -445,20 +448,69 @@ export function setupSocketHandlers(io: Server) {
         const allPlayers = await prisma.player.findMany({ where: { roomId: room.id } });
         const otherPlayers = allPlayers.filter(p => p.id !== playerId);
         
-        console.log(`Vote by ${caller?.name}, sending verification to ${otherPlayers.length} players`);
+        console.log(`🎮 Players in room: ${allPlayers.length}, Others: ${otherPlayers.length}`);
         
-        // Broadcast verification with punishment info
+        // SOLO MODE - Immediate approval
+        if (otherPlayers.length === 0) {
+          console.log('👤 SOLO MODE - Immediate approval');
+          
+          await prisma.player.update({
+            where: { id: playerId },
+            data: { scoreTotal: { increment: 1 } },
+          });
+          
+          await prisma.parlay.update({
+            where: { id: parlayWithInfo!.id },
+            data: {
+              scoreFinal: { increment: 1 },
+              legsHit: { increment: 1 },
+            },
+          });
+          
+          await prisma.confirmedEvent.create({
+            data: {
+              roundId: round.id,
+              normalizedText,
+              tVideoSec: correctedTime,
+              source: 'consensus',
+              awardedTo: [playerId],
+            },
+          });
+          
+          console.log('✅ Solo approval complete, broadcasting pause');
+          
+          io.to(`room:${roomCode}`).emit('event:confirmed', { event: { normalizedText } });
+          io.to(`room:${roomCode}`).emit('video:pause_auto', {
+            tCenter: correctedTime,
+            normalizedText,
+            voters: [playerId],
+            punishment: parlayWithInfo?.punishment,
+            callerName: caller?.name,
+            writerName: parlayWithInfo?.player?.name,
+          });
+          
+          const settings = room.settings as any as RoomSettings;
+          setTimeout(() => {
+            io.to(`room:${roomCode}`).emit('video:resume');
+          }, (settings.pauseDurationSec || 20) * 1000);
+          
+          return;
+        }
+        
+        // MULTI-PLAYER - Send verification
+        console.log(`📢 Sending verification to ${otherPlayers.length} players`);
+        
         io.to(`room:${roomCode}`).except(socket.id).emit('vote:verify', {
           callerId: playerId,
           callerName: caller?.name || 'Someone',
           parlayText: parlayText || normalizedText,
-          punishment: parlay?.punishment,
+          punishment: parlayWithInfo?.punishment,
           voteId: vote.id,
         });
         
-        console.log('Verification broadcasted');
+        console.log('✅ Verification broadcasted');
       } catch (error) {
-        console.error('Error adding vote:', error);
+        console.error('💥 Error in vote:add:', error);
         socket.emit('error', { message: 'Failed to add vote' });
       }
     });

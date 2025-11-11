@@ -58,6 +58,7 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
   const handleSelectParlay = (normalizedText: string, parlayText: string) => {
     const tVideoSec = videoTimeRef.current;
 
+    console.log('📱 PLAYER: Sending vote:add', { tVideoSec, normalizedText, parlayText });
     socket.emit('vote:add', { tVideoSec, normalizedText, parlayText });
     setLastCallTime(tVideoSec);
     setShowParlayPicker(false);

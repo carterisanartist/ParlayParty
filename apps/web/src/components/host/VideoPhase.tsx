@@ -35,6 +35,7 @@ export function VideoPhase({ socket, round, players }: VideoPhaseProps) {
 
   useEffect(() => {
     socket.on('video:pause_auto', ({ tCenter, normalizedText, voters, punishment, callerName, writerName }) => {
+      console.log('🖥️ HOST: Received video:pause_auto', { normalizedText, punishment, callerName, writerName });
       if (player) {
         player.pauseVideo();
         player.seekTo(tCenter, true);

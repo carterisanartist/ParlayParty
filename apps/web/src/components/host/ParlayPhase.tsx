@@ -27,8 +27,24 @@ export function ParlayPhase({ socket, round, players }: ParlayPhaseProps) {
     };
   }, [socket]);
 
-  // DISABLED auto-lock - Host must manually lock
-  // This ensures parlay phase isn't skipped
+  // Auto-lock when all players submit
+  useEffect(() => {
+    const nonHostPlayers = players.filter(p => !p.isHost);
+    if (nonHostPlayers.length === 0) return; // Skip if no players yet
+    
+    const nonHostSubmitted = Array.from(submittedPlayers).filter(id => 
+      nonHostPlayers.some(p => p.id === id)
+    );
+    
+    console.log(`📊 Parlay progress: ${nonHostSubmitted.length}/${nonHostPlayers.length}`);
+    
+    if (nonHostSubmitted.length === nonHostPlayers.length && nonHostPlayers.length > 0) {
+      console.log('✅ All players submitted, auto-locking in 1 second');
+      setTimeout(() => {
+        socket.emit('parlay:lock');
+      }, 1000);
+    }
+  }, [submittedPlayers, players, socket]);
 
   const handleLock = () => {
     socket.emit('parlay:lock');
