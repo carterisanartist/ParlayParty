@@ -27,6 +27,18 @@ export function PlayerVideo({ socket, round, player }: PlayerVideoProps) {
     // Set up listeners FIRST
     socket.on('host:sync', ({ tVideoSec }) => {
       videoTimeRef.current = tVideoSec;
+      
+      // Sync mobile video with host if video is showing on phone
+      if (videoPlayer && showVideoOnPhone) {
+        const currentTime = videoPlayer.getCurrentTime();
+        const timeDiff = Math.abs(currentTime - tVideoSec);
+        
+        // Only sync if difference is significant (>2 seconds)
+        if (timeDiff > 2) {
+          console.log('📱 PLAYER: Syncing mobile video', { currentTime, hostTime: tVideoSec });
+          videoPlayer.seekTo(tVideoSec, true);
+        }
+      }
     });
 
     socket.on('parlay:all', ({ parlays }) => {

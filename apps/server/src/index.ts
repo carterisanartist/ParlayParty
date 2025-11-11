@@ -192,9 +192,10 @@ async function bootstrap() {
   await prisma.$connect();
   console.log('Database connected');
   
-  httpServer.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on 0.0.0.0:${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/healthz`);
+    console.log(`Production ready: App accessible from external traffic`);
   });
 }
 
