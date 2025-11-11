@@ -3,12 +3,16 @@ import { calculateRarityWeight } from '@parlay-party/shared';
 
 describe('Scoring Engine', () => {
   it('should calculate rarity weight correctly', () => {
-    const weight1 = calculateRarityWeight(100, 50, 10);
-    const weight2 = calculateRarityWeight(100, 5, 10);
+    const weight1 = calculateRarityWeight('common', [
+      { normalizedText: 'common' }, { normalizedText: 'common' }
+    ]);
+    const weight2 = calculateRarityWeight('rare', [
+      { normalizedText: 'common' }, { normalizedText: 'common' }, { normalizedText: 'rare' }
+    ]);
     
     expect(weight2).toBeGreaterThan(weight1);
     
-    const weight3 = calculateRarityWeight(100, 1, 10);
+    const weight3 = calculateRarityWeight('unique', [{ normalizedText: 'unique' }]);
     expect(weight3).toBeGreaterThan(weight2);
   });
 

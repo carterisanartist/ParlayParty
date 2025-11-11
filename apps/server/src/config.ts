@@ -8,7 +8,7 @@ import { logger } from './logger';
 
 const configSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().min(1000).max(65535)).default('8080'),
+  PORT: z.string().transform(Number).pipe(z.number().min(1000).max(65535)).default(8080),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
   SERVER_SALT: z.string().min(16, 'SERVER_SALT must be at least 16 characters'),

@@ -32,7 +32,10 @@ export async function calculateEventScore(
   textHits++;
   totalHits++;
   
-  const weight = calculateRarityWeight(totalHits, textHits);
+  const mockParlays = Array(totalHits).fill(null).map((_, i) => ({
+    normalizedText: i < textHits ? normalizedText : 'other'
+  }));
+  const weight = calculateRarityWeight(normalizedText, mockParlays);
   const baseScore = weight * 1.0;
   const completionBonus = baseScore * (multiplier - 1);
   const fastTapBonus = fastTap ? 0.25 : 0;

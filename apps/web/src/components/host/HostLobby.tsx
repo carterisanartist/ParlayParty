@@ -16,38 +16,9 @@ interface HostLobbyProps {
 }
 
 export function HostLobby({ socket, roomCode, players, currentPlayer }: HostLobbyProps) {
-  const handleStartRound = async () => {
+  const handleStartRound = () => {
     // Start from queue (first video)
     socket.emit('host:startFromQueue');
-  };
-    if (!uploadFile) return;
-
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('video', uploadFile);
-    formData.append('roundId', 'temp');
-
-    try {
-      const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080';
-      const response = await fetch(`${serverUrl}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        socket.emit('host:startRound', {
-          videoType: 'upload',
-          videoUrl: `${serverUrl}${data.videoUrl}`,
-        });
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('Failed to upload video');
-    } finally {
-      setUploading(false);
-    }
   };
 
   return (

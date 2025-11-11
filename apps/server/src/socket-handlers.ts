@@ -161,9 +161,9 @@ export function setupSocketHandlers(io: Server) {
         // Input validation
         const validatedInput = validateInput(voteAddSchema, { tVideoSec, normalizedText, parlayText });
         
-        gameLogger.voteReceived(playerId, validatedInput.parlayText, validatedInput.tVideoSec);
-        
         const { roomCode, playerId } = data;
+        
+        gameLogger.voteReceived(playerId!, validatedInput.parlayText, validatedInput.tVideoSec);
         if (!roomCode || !playerId) {
           console.log('❌ Missing roomCode or playerId');
           return;
