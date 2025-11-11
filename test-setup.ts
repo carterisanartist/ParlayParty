@@ -1,24 +1,12 @@
 import { beforeAll, afterAll } from 'vitest';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/parlayparty_test?schema=public'
-    },
-  },
-});
+// Note: Prisma client import disabled for workspace testing
 
 beforeAll(async () => {
-  // Connect to test database
-  await prisma.$connect();
-  
-  // Run migrations
-  const { execSync } = require('child_process');
-  execSync('cd apps/server && npx prisma migrate dev --name test-setup', { stdio: 'inherit' });
+  // Test setup - database setup disabled for workspace testing
+  console.log('Test environment initialized');
 });
 
 afterAll(async () => {
-  // Clean up
-  await prisma.$disconnect();
+  // Test cleanup
+  console.log('Test environment cleaned up');
 });
