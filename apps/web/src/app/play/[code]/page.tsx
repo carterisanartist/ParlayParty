@@ -35,11 +35,13 @@ export default function PlayerPage() {
     });
 
     socket.on('round:started', ({ round }) => {
+      console.log('📱 PLAYER: Round started:', round);
       setCurrentRound(round);
       setStatus('parlay');
     });
 
     socket.on('round:status', ({ status }) => {
+      console.log('📱 PLAYER: Status changed to:', status);
       setStatus(status as RoomStatus);
     });
 
@@ -68,12 +70,25 @@ export default function PlayerPage() {
     const latency = await measureLatency(socket);
 
     socket.emit('player:join', { name }, (response) => {
+      console.log('📱 PLAYER: Join response:', response);
+      
       const playerWithLatency = { ...response.player, latencyMs: latency };
       setCurrentPlayer(playerWithLatency);
       setRoom(response.room);
+      setStatus(response.room.status as RoomStatus);
+      
       if (response.round) {
         setCurrentRound(response.round);
       }
+      
+      // If rejoining during active round, request parlays
+      if (response.room.status === 'video' && response.round) {
+        console.log('📱 PLAYER: Requesting parlays for active round');
+        setTimeout(() => {
+          socket.emit('player:requestParlays');
+        }, 500);
+      }
+      
       setHasJoined(true);
     });
   };
