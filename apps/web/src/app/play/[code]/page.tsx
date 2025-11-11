@@ -23,8 +23,13 @@ export default function PlayerPage() {
   const roomCode = params.code as string;
   const { socket, connected } = useSocket(roomCode);
   
-  const gameState = useGameState();
-  const { error, setError, clearError } = useErrorHandler();
+  const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
+  const [room, setRoom] = useState<Room | null>(null);
+  const [currentRound, setCurrentRound] = useState<Round | null>(null);
+  const [status, setStatus] = useState<RoomStatus>('lobby');
+  const [hasJoined, setHasJoined] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showReveal, setShowReveal] = useState(false);
 
   useEffect(() => {
