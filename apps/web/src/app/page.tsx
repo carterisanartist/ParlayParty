@@ -12,7 +12,7 @@ export default function HomePage() {
 
   const handleCreateRoom = () => {
     setIsCreating(true);
-    const code = generateRoomCode(4);
+    const code = generateRoomCode();
     setTimeout(() => {
       router.push(`/host/${code}`);
     }, 300);

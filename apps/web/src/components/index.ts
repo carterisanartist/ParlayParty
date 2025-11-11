@@ -20,7 +20,7 @@ export { EventLog } from './host/EventLog';
 export { LiveScoreboard } from './host/LiveScoreboard';
 export { ParlayList } from './host/ParlayList';
 export { VideoQueue } from './host/VideoQueue';
-export { RoomSettings } from './host/RoomSettings';
+export { RoomSettingsPanel } from './host/RoomSettings';
 
 // Player Components
 export { PlayerJoin } from './player/PlayerJoin';
