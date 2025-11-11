@@ -1,4 +1,5 @@
 // Comprehensive API and Response Types
+import type { Player, Room, Round, Parlay, VideoQueueItem, RoomStatus } from './types';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -60,4 +61,4 @@ export interface GameMetrics {
 }
 
 // Re-export shared types
-export type { Player, Room, Round, Parlay, VideoQueueItem, RoomStatus } from './types';
+export type { Player, Room, Round, Parlay, VideoQueueItem, RoomStatus };
