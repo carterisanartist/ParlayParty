@@ -153,7 +153,230 @@ export function setupSocketHandlers(io: Server) {
       }
     });
 
-    // Keep all other handlers unchanged...
+    socket.on('queue:add', async ({ videoType, videoUrl, videoId, title }) => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room) return;
+        
+        const player = await prisma.player.findUnique({ where: { id: playerId } });
+        if (!player) return;
+        
+        const maxOrder = await prisma.videoQueue.findFirst({
+          where: { roomId: room.id },
+          orderBy: { order: 'desc' },
+        });
+        
+        await prisma.videoQueue.create({
+          data: {
+            roomId: room.id,
+            videoType,
+            videoId,
+            videoUrl,
+            title,
+            addedBy: player.name,
+            order: (maxOrder?.order || -1) + 1,
+          },
+        });
+        
+        const allVideos = await prisma.videoQueue.findMany({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        io.to(`room:${roomCode}`).emit('queue:updated', { videos: allVideos });
+      } catch (error) {
+        console.error('Error adding to queue:', error);
+        socket.emit('error', { message: 'Failed to add video' });
+      }
+    });
+
+    socket.on('parlay:submit', async ({ text, punishment }) => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room) return;
+        
+        const round = await prisma.round.findFirst({
+          where: { roomId: room.id, status: 'parlay' },
+          orderBy: { index: 'desc' },
+        });
+        if (!round) return;
+        
+        const normalized = normalizeText(text);
+        
+        const existingParlay = await prisma.parlay.findFirst({
+          where: { roundId: round.id, playerId },
+        });
+
+        if (existingParlay) {
+          await prisma.parlay.update({
+            where: { id: existingParlay.id },
+            data: { text, normalizedText: normalized, punishment },
+          });
+        } else {
+          await prisma.parlay.create({
+            data: {
+              roundId: round.id,
+              playerId,
+              text,
+              normalizedText: normalized,
+              punishment,
+            },
+          });
+        }
+        
+        io.to(`room:${roomCode}`).emit('parlay:progress', { playerId, submitted: true });
+      } catch (error) {
+        console.error('Error submitting parlay:', error);
+        socket.emit('error', { message: 'Failed to submit parlay' });
+      }
+    });
+
+    socket.on('parlay:lock', async () => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room || room.hostId !== playerId) return;
+        
+        const round = await prisma.round.findFirst({
+          where: { roomId: room.id, status: 'parlay' },
+          orderBy: { index: 'desc' },
+        });
+        if (!round) return;
+        
+        await prisma.round.update({
+          where: { id: round.id },
+          data: { status: 'video' },
+        });
+        
+        await prisma.room.update({
+          where: { id: room.id },
+          data: { status: 'video' },
+        });
+        
+        // Fetch and broadcast all parlays - SIMPLIFIED for better compatibility
+        const allParlays = await prisma.parlay.findMany({
+          where: { roundId: round.id },
+        });
+        
+        // Convert to plain objects
+        const parlaysToSend = allParlays.map(p => ({
+          id: p.id,
+          text: p.text,
+          normalizedText: p.normalizedText,
+          playerId: p.playerId,
+          punishment: p.punishment,
+        }));
+        
+        console.log('Broadcasting parlays:', parlaysToSend.length);
+        
+        io.to(`room:${roomCode}`).emit('parlay:locked');
+        io.to(`room:${roomCode}`).emit('parlay:all', { parlays: parlaysToSend });
+        io.to(`room:${roomCode}`).emit('round:status', { status: 'video' });
+      } catch (error) {
+        console.error('Error locking parlays:', error);
+        socket.emit('error', { message: 'Failed to lock parlays' });
+      }
+    });
+
+    socket.on('host:startFromQueue', async () => {
+      try {
+        const { roomCode, playerId } = data;
+        if (!roomCode || !playerId) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room || room.hostId !== playerId) return;
+        
+        const nextVideo = await prisma.videoQueue.findFirst({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        if (!nextVideo) {
+          socket.emit('error', { message: 'No videos in queue' });
+          return;
+        }
+        
+        const lastRound = await prisma.round.findFirst({
+          where: { roomId: room.id },
+          orderBy: { index: 'desc' },
+        });
+        
+        const newIndex = (lastRound?.index || 0) + 1;
+        
+        const round = await prisma.round.create({
+          data: {
+            roomId: room.id,
+            index: newIndex,
+            videoType: nextVideo.videoType,
+            videoId: nextVideo.videoId,
+            videoUrl: nextVideo.videoUrl,
+            videoTitle: nextVideo.title,
+            status: 'parlay',
+          },
+        });
+        
+        await prisma.room.update({
+          where: { id: room.id },
+          data: { status: 'parlay' },
+        });
+        
+        await prisma.videoQueue.delete({ where: { id: nextVideo.id } });
+        
+        const remaining = await prisma.videoQueue.findMany({
+          where: { roomId: room.id },
+          orderBy: { order: 'asc' },
+        });
+        
+        io.to(`room:${roomCode}`).emit('round:started', { round });
+        io.to(`room:${roomCode}`).emit('round:status', { status: 'parlay' });
+        io.to(`room:${roomCode}`).emit('queue:updated', { videos: remaining });
+      } catch (error) {
+        console.error('Error starting from queue:', error);
+        socket.emit('error', { message: 'Failed to start round' });
+      }
+    });
+
+    socket.on('player:requestParlays', async () => {
+      try {
+        const { roomCode } = data;
+        if (!roomCode) return;
+        
+        const room = await prisma.room.findUnique({ where: { code: roomCode } });
+        if (!room) return;
+        
+        const round = await prisma.round.findFirst({
+          where: { roomId: room.id, status: 'video' },
+          orderBy: { index: 'desc' },
+        });
+        
+        if (!round) return;
+        
+        const allParlays = await prisma.parlay.findMany({
+          where: { roundId: round.id },
+        });
+        
+        const parlaysToSend = allParlays.map(p => ({
+          id: p.id,
+          text: p.text,
+          normalizedText: p.normalizedText,
+          playerId: p.playerId,
+        }));
+        
+        console.log(`Sending ${parlaysToSend.length} parlays to ${socket.id}`);
+        socket.emit('parlay:all', { parlays: parlaysToSend });
+      } catch (error) {
+        console.error('Error fetching parlays:', error);
+      }
+    });
+
     socket.on('ping', (callback) => {
       callback(Date.now());
     });
