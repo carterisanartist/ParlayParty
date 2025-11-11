@@ -11,7 +11,7 @@ interface PlayerRevealProps {
   player: Player;
 }
 
-export function PlayerReveal({ socket }: PlayerRevealProps) {
+export function PlayerReveal({ socket, round, player }: PlayerRevealProps) {
   const [allParlays, setAllParlays] = useState<Parlay[]>([]);
   const [myParlay, setMyParlay] = useState<Parlay | null>(null);
 
