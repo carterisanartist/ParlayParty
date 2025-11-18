@@ -82,7 +82,9 @@ export function VideoFileCard({
 
   return (
     <motion.div
-      ref={(node) => drag(drop(node))}
+      ref={(node) => {
+        drag(drop(node));
+      }}
       className="video-file-card group"
       initial={{ opacity: 0, y: 10, scale: 0.95 }}
       animate={{

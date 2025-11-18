@@ -802,7 +802,7 @@ export function setupSocketHandlers(io: Server) {
       teamManager.initializeTeams(room.id, teams);
       io.to(`room:${roomCode}`).emit('teams:updated', { teams });
       
-      console.log(`👥 Teams assigned in room ${roomCode}`, teams.map(t => ({ name: t.name, players: t.players.length })));
+      console.log(`👥 Teams assigned in room ${roomCode}`, teams.map((t: any) => ({ name: t.name, players: t.players.length })));
     });
 
     socket.on('teams:confirm', async ({ teams }) => {
@@ -813,8 +813,8 @@ export function setupSocketHandlers(io: Server) {
       if (!room || room.hostId !== playerId) return;
       
       // Join team-specific rooms for chat
-      teams.forEach(team => {
-        team.players.forEach(player => {
+      teams.forEach((team: any) => {
+        team.players.forEach((player: any) => {
           const playerSocket = io.sockets.sockets.get(player.id);
           if (playerSocket) {
             playerSocket.join(`team:${roomCode}:${team.id}`);

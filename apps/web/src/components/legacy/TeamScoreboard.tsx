@@ -154,8 +154,7 @@ export function TeamScoreboard({ socket, teams, showMVP = false, isCompact = fal
                 `}
                 style={{
                   borderColor: team.color,
-                  boxShadow: isLeading ? `0 0 30px ${team.color}60` : undefined,
-                  ringColor: isLeading ? team.color : undefined
+                  boxShadow: isLeading ? `0 0 30px ${team.color}60` : undefined
                 }}
               >
                 {/* Background gradient */}
@@ -231,7 +230,6 @@ export function TeamScoreboard({ socket, teams, showMVP = false, isCompact = fal
                           <PlayerAvatar 
                             player={player} 
                             size="sm"
-                            className="border-2 border-bg-0"
                           />
                         </div>
                       ))}

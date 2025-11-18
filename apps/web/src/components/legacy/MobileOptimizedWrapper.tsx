@@ -2,7 +2,7 @@
 
 import { ReactNode, useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { useGestures, usePullToRefresh } from '../hooks/useGestures';
+import { useGestures, usePullToRefresh } from '../../hooks/useGestures';
 
 interface MobileOptimizedWrapperProps {
   children: ReactNode;

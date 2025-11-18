@@ -87,7 +87,7 @@ export function TeamSetup({ socket, players, isHost, onTeamsReady }: TeamSetupPr
     const playersToAssign = players.filter(p => !p.isHost);
     const shuffled = [...playersToAssign].sort(() => Math.random() - 0.5);
     
-    const newTeams = teams.map(team => ({ ...team, players: [] }));
+    const newTeams = teams.map(team => ({ ...team, players: [] as Player[] }));
     
     shuffled.forEach((player, index) => {
       const teamIndex = index % teamCount;

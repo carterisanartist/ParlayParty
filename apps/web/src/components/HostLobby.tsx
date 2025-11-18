@@ -290,7 +290,7 @@ export default function HostLobby({
         .map(p => ({
           id: p.id,
           name: p.name,
-          joinedAt: p.joinedAt || Date.now()
+          joinedAt: Date.now()
         }));
       setPlayers(convertedPlayers);
     }

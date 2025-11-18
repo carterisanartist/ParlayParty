@@ -15,9 +15,9 @@ import PlayerResults from '@/components/mobile/PlayerResults';
 import { PlayerJoin } from '@/components/legacy/player/PlayerJoin';
 import { TylerSoundPlayer } from '@/components/legacy/TylerSoundPlayer';
 import { ErrorBoundary } from '@/components/legacy/ErrorBoundary';
-import { LoadingSpinner as LoadingOverlay } from '@/components/legacy/LoadingSpinner';
+import { LoadingOverlay } from '@/components/legacy/LoadingSpinner';
 import { MobileOptimizedWrapper } from '@/components/legacy/MobileOptimizedWrapper';
-import type { Player, Room, Round, RoomStatus, PlayerJoinResponse, PlayerJoinErrorResponse, ParleyResponseItem } from '@parlay-party/shared';
+import type { Player, Room, Round, RoomStatus, PlayerJoinResponse, PlayerJoinErrorResponse, ParleyResponseItem, Parlay } from '@parlay-party/shared';
 
 export default function PlayerPage() {
   const params = useParams();
@@ -26,7 +26,9 @@ export default function PlayerPage() {
   
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [currentRound, setCurrentRound] = useState<Round | null>(null);
+  const [parlays, setParlays] = useState<Parlay[]>([]);
   const [status, setStatus] = useState<RoomStatus>('lobby');
   const [hasJoined, setHasJoined] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,6 +41,10 @@ export default function PlayerPage() {
     socket.on('room:update', ({ room }) => {
       setRoom(room);
       setStatus(room.status as RoomStatus);
+    });
+
+    socket.on('roster:update', ({ players }) => {
+      setPlayers(players);
     });
 
     socket.on('round:started', ({ round }) => {
@@ -59,8 +65,14 @@ export default function PlayerPage() {
       }, 5000);
     });
 
+    socket.on('parlay:all', ({ parlays }) => {
+      setParlays(parlays);
+    });
+
     return () => {
       socket.off('parlay:locked');
+      socket.off('parlay:all');
+      socket.off('roster:update');
       socket.off('room:update');
       socket.off('round:started');
       socket.off('round:status');
@@ -168,8 +180,8 @@ export default function PlayerPage() {
       
       <MobileOptimizedWrapper
         onRefresh={async () => {
-          // Refresh game state
-          socket.emit('player:requestState');
+          // Refresh game state - not implemented yet
+          console.log('Pull to refresh triggered');
           await new Promise(resolve => setTimeout(resolve, 1000));
         }}
         enablePullToRefresh={true}
@@ -181,9 +193,13 @@ export default function PlayerPage() {
         <PlayerLobby
           roomCode={roomCode}
           playerName={currentPlayer.name}
-          players={room?.players || []}
+          players={players.map(p => ({
+            id: p.id,
+            name: p.name,
+            isReady: true // All players are considered ready for now
+          }))}
           onLeaveRoom={() => {
-            socket.emit('player:leave');
+            // Player leave not implemented yet
             setHasJoined(false);
           }}
         />
@@ -193,8 +209,12 @@ export default function PlayerPage() {
         <PlayerParlayEntry
           playerName={currentPlayer.name}
           videoTitle={currentRound.videoTitle || 'Video'}
-          onSubmit={(parlay) => {
-            socket.emit('parlay:submit', { parlay });
+          onSubmit={(prediction) => {
+            socket.emit('parlay:submit', { 
+              text: prediction,
+              punishment: '', // Optional punishment
+              frequency: 'once' // Default frequency
+            });
           }}
         />
       )}
@@ -202,7 +222,14 @@ export default function PlayerPage() {
       {status === 'video' && !showReveal && currentRound && (
         <PlayerVideoPhase
           playerName={currentPlayer.name}
-          parlays={currentRound.parlays || []}
+          parlays={parlays.map(p => {
+            const player = players.find(pl => pl.id === p.playerId);
+            return {
+              id: p.id,
+              playerName: player?.name || 'Unknown',
+              prediction: p.text
+            };
+          })}
           onCallEvent={() => {
             // This would open the parlay picker modal
           }}
@@ -212,8 +239,15 @@ export default function PlayerPage() {
       {status === 'video' && showReveal && currentRound && (
         <PlayerReveal
           currentPlayerName={currentPlayer.name}
-          currentPlayerParlay={currentRound.parlays?.find(p => p.playerId === currentPlayer.id)?.text || ''}
-          allParlays={currentRound.parlays || []}
+          currentPlayerParlay={parlays.find(p => p.playerId === currentPlayer.id)?.text || ''}
+          allParlays={parlays.map(p => {
+            const player = players.find(pl => pl.id === p.playerId);
+            return {
+              id: p.id,
+              playerName: player?.name || 'Unknown',
+              prediction: p.text
+            };
+          })}
           onRevealComplete={() => setShowReveal(false)}
         />
       )}
@@ -231,7 +265,7 @@ export default function PlayerPage() {
         <PlayerWheelSubmit
           playerName={currentPlayer.name}
           onSubmit={(punishment) => {
-            socket.emit('wheel:submit', { punishment });
+            socket.emit('wheel:submit', { text: punishment });
           }}
         />
       )}
@@ -239,9 +273,9 @@ export default function PlayerPage() {
       {status === 'results' && (
         <PlayerResults
           playerName={currentPlayer.name}
-          score={currentPlayer.score || 0}
+          score={currentPlayer.scoreTotal || 0}
           rank={1}
-          totalPlayers={room?.players?.length || 1}
+          totalPlayers={players.length || 1}
           correctParlays={1}
           totalParlays={1}
           onReturnToLobby={() => setStatus('lobby')}

@@ -251,7 +251,7 @@ export function TeamChat({
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Type a message..."
                   className="flex-1 px-3 py-2 bg-bg-1 rounded-lg text-sm focus:outline-none focus:ring-2"
-                  style={{ focusRingColor: team.color }}
+                  style={{ '--tw-ring-color': team.color } as React.CSSProperties}
                 />
                 <motion.button
                   whileHover={{ scale: 1.05 }}

@@ -466,8 +466,7 @@ export default function HostWheelPhase({ punishments, onComplete }: HostWheelPha
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ 
-              opacity: { duration: 0.4 },
-              exit: { duration: 0.5, ease: 'easeIn' }
+              opacity: { duration: 0.4 }
             }}
           >
             {/* Radial Spotlight Behind Text */}
@@ -496,8 +495,7 @@ export default function HostWheelPhase({ punishments, onComplete }: HostWheelPha
                   times: [0, 0.6, 1],
                   ease: [0.34, 1, 0.64, 1]
                 },
-                opacity: { duration: 0.4 },
-                exit: { duration: 0.5, ease: 'easeIn' }
+                opacity: { duration: 0.4 }
               }}
             >
               <motion.div

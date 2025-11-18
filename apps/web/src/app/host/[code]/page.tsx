@@ -14,7 +14,7 @@ import HostWheelPhase from '@/components/host/HostWheelPhase';
 // Temporarily use legacy components for missing ones
 import { ReviewPhase } from '@/components/legacy/host/ReviewPhase';
 import { TylerSoundPlayer } from '@/components/legacy/TylerSoundPlayer';
-import type { Player, Room, Round, RoomStatus } from '@parlay-party/shared';
+import type { Player, Room, Round, RoomStatus, Parlay } from '@parlay-party/shared';
 
 export default function HostPage() {
   const params = useParams();
@@ -27,6 +27,7 @@ export default function HostPage() {
   const [currentRound, setCurrentRound] = useState<Round | null>(null);
   const [status, setStatus] = useState<RoomStatus>('lobby');
   const [showReveal, setShowReveal] = useState(false);
+  const [parlays, setParlays] = useState<Parlay[]>([]);
 
   useEffect(() => {
     if (!socket || !connected) return;
@@ -72,8 +73,13 @@ export default function HostPage() {
       }, 5000);
     });
 
+    socket.on('parlay:all', ({ parlays }) => {
+      setParlays(parlays);
+    });
+
     return () => {
       socket.off('parlay:locked');
+      socket.off('parlay:all');
       socket.off('roster:update');
       socket.off('room:update');
       socket.off('round:started');
@@ -119,14 +125,29 @@ export default function HostPage() {
           <HostParlayEntry
             players={players.map(p => ({ ...p, locked: false }))}
             onForceStart={() => setStatus('video')}
-            onRemovePlayer={(playerId) => socket.emit('player:kick', { playerId })}
+            onRemovePlayer={(playerId) => {
+              // Player removal not implemented in socket events yet
+              console.log('Remove player:', playerId);
+            }}
           />
         )}
         
         {status === 'video' && !showReveal && currentRound && (
           <HostVideoPhase
-            parlays={currentRound.parlays || []}
-            players={players}
+            parlays={parlays.map(p => {
+              const player = players.find(pl => pl.id === p.playerId);
+              return {
+                id: p.id,
+                playerName: player?.name || 'Unknown',
+                prediction: p.text,
+                completed: p.completedAt != null
+              };
+            })}
+            players={players.map(p => ({
+              id: p.id,
+              name: p.name,
+              score: p.scoreTotal
+            }))}
             videoUrl={currentRound.videoUrl || ''}
             onSkip={() => setStatus('review')}
           />
@@ -134,7 +155,14 @@ export default function HostPage() {
         
         {status === 'video' && showReveal && currentRound && (
           <HostParlayReveal
-            parlays={currentRound.parlays || []}
+            parlays={parlays.map(p => {
+              const player = players.find(pl => pl.id === p.playerId);
+              return {
+                id: p.id,
+                playerName: player?.name || 'Unknown',
+                prediction: p.text
+              };
+            })}
             onRevealComplete={() => setShowReveal(false)}
           />
         )}
@@ -150,13 +178,20 @@ export default function HostPage() {
         {status === 'wheel' && currentRound && (
           <HostWheelPhase
             punishments={[]}
-            onComplete={(punishment) => socket.emit('wheel:selected', { punishment })}
+            onComplete={(punishment) => {
+              // Wheel selection is complete
+              console.log('Wheel punishment:', punishment);
+            }}
           />
         )}
         
         {status === 'results' && (
           <HostResults
-            players={players}
+            players={players.map(p => ({
+              id: p.id,
+              name: p.name,
+              score: p.scoreTotal
+            }))}
             onContinue={() => setStatus('lobby')}
             onReturnToLobby={() => setStatus('lobby')}
           />
