@@ -2,6 +2,7 @@
 
 import { hostTutorialSteps, playerTutorialSteps } from '@parlay-party/shared';
 import { TutorialOverlay } from './TutorialOverlay';
+import { X } from 'lucide-react';
 
 interface TutorialWrapperProps {
   onComplete: () => void;
