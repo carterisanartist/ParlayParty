@@ -56,17 +56,15 @@ export default function HomePage() {
     setClickedButton('create');
     setTimeout(() => setClickedButton(null), 300);
     const code = generateRoomCode();
+    console.log('Creating room with code:', code);
     router.push(`/host/${code}`);
   };
 
   const handleEnterClick = () => {
-    if (roomCode.length !== 6) return;
-    
-    // Store player name in session storage for the player page to use
-    if (playerName.trim()) {
-      sessionStorage.setItem('playerName', playerName);
-    }
-    
+    if (roomCode.length !== 6 || playerName.trim() === '') return;
+    console.log('Joining room:', roomCode, 'as player:', playerName);
+    // Store player name for the join page
+    sessionStorage.setItem('playerName', playerName);
     router.push(`/play/${roomCode.toUpperCase()}`);
   };
 
@@ -75,7 +73,7 @@ export default function HomePage() {
       {/* Import Orbitron font */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
       {/* Layered atmospheric background */}
       <div className="absolute inset-0 bg-black" />
@@ -263,7 +261,7 @@ export default function HomePage() {
                   <button
                     className="rainbow-hover-button w-full h-12 rounded-lg uppercase tracking-widest transition-all relative overflow-hidden group"
                     style={{ fontFamily: 'Orbitron, sans-serif' }}
-                    disabled={roomCode.length !== 6}
+                    disabled={roomCode.length !== 6 || playerName.trim().length === 0}
                     onClick={handleEnterClick}
                   >
                     <span className="relative z-10 block w-full text-center">Enter</span>
@@ -353,7 +351,7 @@ export default function HomePage() {
       </div>
 
       {/* CSS for liquid rainbow effects */}
-      <style>{`
+      <style jsx>{`
         /* ========================================
            ATMOSPHERIC BACKGROUND LAYERS
            ======================================== */

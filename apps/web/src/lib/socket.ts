@@ -10,7 +10,12 @@ export function useSocket(roomCode: string) {
   const socketRef = useRef<TypedSocket | null>(null);
 
   useEffect(() => {
-    const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080';
+    // In production, connect to same origin. In dev, connect to local server
+    const serverUrl = process.env.NODE_ENV === 'production' 
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:8080';
+    
+    console.log('Connecting to socket server:', serverUrl);
     
     const newSocket: TypedSocket = io(serverUrl, {
       query: { roomCode },
