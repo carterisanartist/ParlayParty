@@ -48,4 +48,4 @@ EXPOSE 8080
 
 # Start server
 WORKDIR /app/apps/server
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
