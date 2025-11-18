@@ -1,5 +1,4 @@
 import { Server, Socket } from 'socket.io';
-import { roomManager } from './room-manager';
 
 export function setupWebRTCHandlers(io: Server, socket: Socket) {
   // Handle WebRTC offer

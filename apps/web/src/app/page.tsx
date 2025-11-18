@@ -63,16 +63,12 @@ export default function HomePage() {
     setShowJoinForm(!showJoinForm);
   };
 
-  const handleCreateClick = (tutorial = false) => {
+  const handleCreateClick = () => {
     setClickedButton('create');
     setTimeout(() => setClickedButton(null), 300);
     const code = generateRoomCode();
     console.log('Creating room with code:', code);
-    if (tutorial) {
-      router.push(`/host/${code}?tutorial=true`);
-    } else {
-      router.push(`/host/${code}`);
-    }
+    router.push(`/host/${code}`);
   };
 
   const handleEnterClick = () => {
@@ -288,7 +284,7 @@ export default function HomePage() {
 
           {/* Create Room Button */}
           <motion.button
-            onClick={() => handleCreateClick(false)}
+            onClick={handleCreateClick}
             className={`rainbow-hover-button w-full h-14 rounded-lg uppercase tracking-widest transition-all relative overflow-hidden group ${
               clickedButton === 'create' ? 'neon-flash' : ''
             }`}
@@ -299,22 +295,6 @@ export default function HomePage() {
             whileTap={{ scale: 0.98 }}
           >
             <span className="relative z-10 block w-full text-center">Create Room</span>
-          </motion.button>
-
-          {/* Tutorial Mode Button */}
-          <motion.button
-            onClick={() => handleCreateClick(true)}
-            className="rainbow-hover-button w-full h-14 rounded-lg uppercase tracking-widest transition-all relative overflow-hidden group"
-            style={{ fontFamily: 'Orbitron, sans-serif' }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 1.0 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <span className="relative z-10 block w-full text-center flex items-center justify-center gap-2">
-              <HelpCircle className="w-5 h-5" />
-              Tutorial Mode
-            </span>
           </motion.button>
         </motion.div>
 

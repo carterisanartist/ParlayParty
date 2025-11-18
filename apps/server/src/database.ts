@@ -32,6 +32,12 @@ class DatabaseManager {
     } catch (error) {
       logger.error('Database connection failed', { error, attempt: this.retryCount + 1 });
       
+      // In development, if database is not available, continue anyway
+      if (process.env.NODE_ENV === 'development') {
+        logger.warn('Running in development mode without database - some features may not work');
+        return;
+      }
+      
       if (this.retryCount < this.maxRetries) {
         this.retryCount++;
         const delay = Math.min(1000 * Math.pow(2, this.retryCount), 10000); // Exponential backoff, max 10s
