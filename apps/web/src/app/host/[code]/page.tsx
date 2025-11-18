@@ -4,15 +4,16 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useSocket } from '@/lib/socket';
 import { audioManager } from '@/lib/audio';
-import { VFXLayer } from '@/components/VFXLayer';
-import { HostLobby } from '@/components/host/HostLobby';
-import { ParlayPhase } from '@/components/host/ParlayPhase';
-import { ParlayReveal } from '@/components/host/ParlayReveal';
-import { VideoPhase } from '@/components/host/VideoPhase';
-import { ReviewPhase } from '@/components/host/ReviewPhase';
-import { WheelPhase } from '@/components/host/WheelPhase';
-import { ResultsPhase } from '@/components/host/ResultsPhase';
-import { TylerSoundPlayer } from '@/components/TylerSoundPlayer';
+import { VFXLayer } from '@/components/legacy/VFXLayer';
+import HostLobby from '@/components/HostLobby';
+import HostParlayEntry from '@/components/host/HostParlayEntry';
+import HostParlayReveal from '@/components/host/HostParlayReveal';
+import HostVideoPhase from '@/components/host/HostVideoPhase';
+import HostResults from '@/components/host/HostResults';
+import HostWheelPhase from '@/components/host/HostWheelPhase';
+// Temporarily use legacy components for missing ones
+import { ReviewPhase } from '@/components/legacy/host/ReviewPhase';
+import { TylerSoundPlayer } from '@/components/legacy/TylerSoundPlayer';
 import type { Player, Room, Round, RoomStatus } from '@parlay-party/shared';
 
 export default function HostPage() {
@@ -110,30 +111,31 @@ export default function HostPage() {
             roomCode={roomCode}
             players={players}
             currentPlayer={currentPlayer}
+            onStartGame={() => setStatus('parlay')}
           />
         )}
         
         {status === 'parlay' && currentRound && (
-          <ParlayPhase
-            socket={socket}
-            round={currentRound}
-            players={players}
+          <HostParlayEntry
+            players={players.map(p => ({ ...p, locked: false }))}
+            onForceStart={() => setStatus('video')}
+            onRemovePlayer={(playerId) => socket.emit('player:kick', { playerId })}
           />
         )}
         
         {status === 'video' && !showReveal && currentRound && (
-          <VideoPhase
-            socket={socket}
-            round={currentRound}
+          <HostVideoPhase
+            parlays={currentRound.parlays || []}
             players={players}
+            videoUrl={currentRound.videoUrl || ''}
+            onSkip={() => setStatus('review')}
           />
         )}
         
         {status === 'video' && showReveal && currentRound && (
-          <ParlayReveal
-            socket={socket}
-            round={currentRound}
-            players={players}
+          <HostParlayReveal
+            parlays={currentRound.parlays || []}
+            onRevealComplete={() => setShowReveal(false)}
           />
         )}
         
@@ -146,17 +148,17 @@ export default function HostPage() {
         )}
         
         {status === 'wheel' && currentRound && (
-          <WheelPhase
-            socket={socket}
-            round={currentRound}
-            players={players}
+          <HostWheelPhase
+            punishments={[]}
+            onComplete={(punishment) => socket.emit('wheel:selected', { punishment })}
           />
         )}
         
         {status === 'results' && (
-          <ResultsPhase
-            socket={socket}
+          <HostResults
             players={players}
+            onContinue={() => setStatus('lobby')}
+            onReturnToLobby={() => setStatus('lobby')}
           />
         )}
       </div>

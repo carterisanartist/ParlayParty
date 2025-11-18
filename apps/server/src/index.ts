@@ -42,7 +42,7 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "https:", "data:", "blob:"],
       mediaSrc: ["'self'", "https:", "data:", "blob:"],
-      scriptSrc: ["'self'", "'unsafe-eval'", "https://www.youtube.com", "https://s.ytimg.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.youtube.com", "https://s.ytimg.com"],
       frameSrc: ["'self'", "https://www.youtube.com", "https://www.tiktok.com"],
       connectSrc: ["'self'", "wss:", "https:"],
     },
@@ -264,6 +264,9 @@ process.on('SIGINT', async () => {
   logger.info('SIGINT received, starting graceful shutdown');
   
   try {
+    httpServer.close(() => {
+      console.log('Server closed');
+    });
     await databaseManager.disconnect();
     await redis.quit();
     process.exit(0);
@@ -271,15 +274,5 @@ process.on('SIGINT', async () => {
     logger.error('Error during shutdown', { error });
     process.exit(1);
   }
-});
-
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully...');
-  await prisma.$disconnect();
-  await redis.quit();
-  httpServer.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
 });
 

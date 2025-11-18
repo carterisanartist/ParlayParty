@@ -1,6 +1,7 @@
 export type RoomStatus = 'lobby' | 'parlay' | 'video' | 'review' | 'wheel' | 'results' | 'ended';
 export type RoundStatus = 'pending' | 'parlay' | 'video' | 'review' | 'wheel' | 'completed';
-export type VideoType = 'youtube' | 'upload' | 'tiktok';
+export type VideoType = 'youtube' | 'upload' | 'tiktok' | 'twitch' | 'kick';
+export type StreamPlatform = 'twitch' | 'kick';
 export type TwoPlayerMode = 'unanimous' | 'single_caller_verify' | 'judge_mode' | 'speed_call';
 export type WheelEntryStatus = 'pending' | 'approved' | 'rejected';
 export type EventSource = 'consensus' | 'host_review';
@@ -14,6 +15,7 @@ export interface RoomSettings {
   twoPlayerMode: TwoPlayerMode;
   scoreMultiplier: number;
   pauseDurationSec: number;
+  gameMode?: 'classic' | 'speed' | 'team' | 'marathon' | 'tournament';
 }
 
 export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
@@ -56,6 +58,9 @@ export interface Round {
   videoUrl?: string;
   videoTitle?: string;
   durationSec?: number;
+  streamUrl?: string;
+  streamPlatform?: StreamPlatform;
+  streamDelaySec?: number;
   status: RoundStatus;
   createdAt: Date;
 }

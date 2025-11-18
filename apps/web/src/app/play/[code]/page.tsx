@@ -4,18 +4,19 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { audioManager } from '@/lib/audio';
 import { useSocket, measureLatency, useGameState, useErrorHandler } from '@/hooks';
-import {
-  PlayerJoin,
-  PlayerLobby,
-  PlayerParlay,
-  PlayerReveal,
-  PlayerVideo,
-  PlayerWheel,
-  PlayerResults,
-  TylerSoundPlayer,
-  ErrorBoundary,
-  LoadingOverlay
-} from '@/components';
+import PlayerLobby from '@/components/PlayerLobby';
+import PlayerParlayEntry from '@/components/mobile/PlayerParlayEntry';
+import PlayerParlayLocked from '@/components/mobile/PlayerParlayLocked';
+import PlayerReveal from '@/components/mobile/PlayerReveal';
+import PlayerVideoPhase from '@/components/mobile/PlayerVideoPhase';
+import PlayerWheelSubmit from '@/components/mobile/PlayerWheelSubmit';
+import PlayerResults from '@/components/mobile/PlayerResults';
+// Use legacy components temporarily
+import { PlayerJoin } from '@/components/legacy/player/PlayerJoin';
+import { TylerSoundPlayer } from '@/components/legacy/TylerSoundPlayer';
+import { ErrorBoundary } from '@/components/legacy/ErrorBoundary';
+import { LoadingSpinner as LoadingOverlay } from '@/components/legacy/LoadingSpinner';
+import { MobileOptimizedWrapper } from '@/components/legacy/MobileOptimizedWrapper';
 import type { Player, Room, Round, RoomStatus, PlayerJoinResponse, PlayerJoinErrorResponse, ParleyResponseItem } from '@parlay-party/shared';
 
 export default function PlayerPage() {
@@ -165,36 +166,55 @@ export default function PlayerPage() {
         </div>
       )}
       
-      <div className="min-h-screen p-4">
+      <MobileOptimizedWrapper
+        onRefresh={async () => {
+          // Refresh game state
+          socket.emit('player:requestState');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }}
+        enablePullToRefresh={true}
+        enableGestures={true}
+        enableHaptic={true}
+      >
+        <div className="min-h-screen p-4">
       {status === 'lobby' && (
         <PlayerLobby
-          socket={socket}
           roomCode={roomCode}
-          player={currentPlayer}
+          playerName={currentPlayer.name}
+          players={room?.players || []}
+          onLeaveRoom={() => {
+            socket.emit('player:leave');
+            setHasJoined(false);
+          }}
         />
       )}
       
       {status === 'parlay' && currentRound && (
-        <PlayerParlay
-          socket={socket}
-          round={currentRound}
-          player={currentPlayer}
+        <PlayerParlayEntry
+          playerName={currentPlayer.name}
+          videoTitle={currentRound.videoTitle || 'Video'}
+          onSubmit={(parlay) => {
+            socket.emit('parlay:submit', { parlay });
+          }}
         />
       )}
       
       {status === 'video' && !showReveal && currentRound && (
-        <PlayerVideo
-          socket={socket}
-          round={currentRound}
-          player={currentPlayer}
+        <PlayerVideoPhase
+          playerName={currentPlayer.name}
+          parlays={currentRound.parlays || []}
+          onCallEvent={() => {
+            // This would open the parlay picker modal
+          }}
         />
       )}
       
       {status === 'video' && showReveal && currentRound && (
         <PlayerReveal
-          socket={socket}
-          round={currentRound}
-          player={currentPlayer}
+          currentPlayerName={currentPlayer.name}
+          currentPlayerParlay={currentRound.parlays?.find(p => p.playerId === currentPlayer.id)?.text || ''}
+          allParlays={currentRound.parlays || []}
+          onRevealComplete={() => setShowReveal(false)}
         />
       )}
       
@@ -208,19 +228,29 @@ export default function PlayerPage() {
       )}
       
       {status === 'wheel' && currentRound && (
-        <PlayerWheel
-          socket={socket}
-          round={currentRound}
-          player={currentPlayer}
+        <PlayerWheelSubmit
+          playerName={currentPlayer.name}
+          onSubmit={(punishment) => {
+            socket.emit('wheel:submit', { punishment });
+          }}
         />
       )}
       
       {status === 'results' && (
-        <PlayerResults player={currentPlayer} />
+        <PlayerResults
+          playerName={currentPlayer.name}
+          score={currentPlayer.score || 0}
+          rank={1}
+          totalPlayers={room?.players?.length || 1}
+          correctParlays={1}
+          totalParlays={1}
+          onReturnToLobby={() => setStatus('lobby')}
+        />
       )}
       
       <TylerSoundPlayer socket={socket} />
       </div>
+      </MobileOptimizedWrapper>
     </ErrorBoundary>
   );
 }

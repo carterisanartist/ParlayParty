@@ -1,254 +1,261 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  --bg-0: #0B0B0B;
-  --bg-1: #121212;
-  --fg-0: #F5F8FF;
-  --fg-subtle: #B6C2E1;
-  --accent-1: #00FFF7;
-  --accent-2: #FF2D95;
-  --accent-3: #8A6BFF;
-  --success: #7FFF00;
-  --danger: #FF4444;
-  --warning: #FFC400;
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: oklch(0.145 0 0);
+  --card: #ffffff;
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #030213;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+  --accent: #e9ebef;
+  --accent-foreground: #030213;
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #030213;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
 }
 
-html,
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: rgba(var(--ring), 0.5);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* ========================================
+   PARLAY PARTY GLOBAL NEON THEME
+   ======================================== */
+
+/* Global background - jet black with radial neon gradient */
 body {
-  width: 100%;
-  height: 100%;
-  overflow-x: hidden;
+  background: #000000;
+  position: relative;
+  min-height: 100vh;
 }
 
-body {
-  background: linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 100%);
-  color: var(--fg-0);
-  font-family: 'Inter', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-@layer utilities {
-  .glow-cyan {
-    text-shadow: 
-      0 0 10px var(--accent-1),
-      0 0 20px var(--accent-1),
-      0 0 30px var(--accent-1);
-  }
-  
-  .glow-pink {
-    text-shadow: 
-      0 0 10px var(--accent-2),
-      0 0 20px var(--accent-2),
-      0 0 30px var(--accent-2);
-  }
-  
-  .glow-violet {
-    text-shadow: 
-      0 0 10px var(--accent-3),
-      0 0 20px var(--accent-3),
-      0 0 30px var(--accent-3);
-  }
-  
-  .neon-border {
-    border: 1px solid var(--accent-1);
-    box-shadow: 
-      inset 0 0 10px var(--accent-1),
-      0 0 10px var(--accent-1),
-      0 0 20px var(--accent-1);
-  }
-  
-  .neon-border-pink {
-    border: 1px solid var(--accent-2);
-    box-shadow: 
-      inset 0 0 10px var(--accent-2),
-      0 0 10px var(--accent-2),
-      0 0 20px var(--accent-2);
-  }
-  
-  .neon-border-violet {
-    border: 1px solid var(--accent-3);
-    box-shadow: 
-      inset 0 0 10px var(--accent-3),
-      0 0 10px var(--accent-3),
-      0 0 20px var(--accent-3);
-  }
-  
-  .radial-cyan {
-    background: radial-gradient(circle, rgba(0, 255, 247, 0.15) 0%, transparent 70%);
-  }
-  
-  .radial-pink {
-    background: radial-gradient(circle, rgba(255, 45, 149, 0.15) 0%, transparent 70%);
-  }
-  
-  .radial-violet {
-    background: radial-gradient(circle, rgba(138, 107, 255, 0.15) 0%, transparent 70%);
-  }
-  
-  .animated-gradient {
-    background: linear-gradient(
-      45deg,
-      var(--accent-1),
-      var(--accent-2),
-      var(--accent-3),
-      var(--accent-1)
-    );
-    background-size: 400% 400%;
-    animation: gradient-move 15s ease infinite;
-  }
-  
-  .text-glow-cyan {
-    color: var(--accent-1);
-    filter: drop-shadow(0 0 8px var(--accent-1));
-  }
-  
-  .text-glow-pink {
-    color: var(--accent-2);
-    filter: drop-shadow(0 0 8px var(--accent-2));
-  }
-  
-  .text-glow-violet {
-    color: var(--accent-3);
-    filter: drop-shadow(0 0 8px var(--accent-3));
-  }
-  
-  .btn-neon {
-    @apply px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200;
-    @apply neon-border bg-bg-1 text-accent-1 hover:bg-accent-1 hover:text-bg-0;
-  }
-  
-  .btn-neon-pink {
-    @apply px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200;
-    @apply neon-border-pink bg-bg-1 text-accent-2 hover:bg-accent-2 hover:text-bg-0;
-  }
-  
-  .btn-neon-violet {
-    @apply px-6 py-3 rounded-lg font-semibold tracking-wide transition-all duration-200;
-    @apply neon-border-violet bg-bg-1 text-accent-3 hover:bg-accent-3 hover:text-bg-0;
-  }
-  
-  .card-neon {
-    @apply bg-bg-1 rounded-xl p-6 neon-border;
-  }
-  
-  .input-neon {
-    @apply w-full px-4 py-3 bg-bg-0 border-2 border-accent-1 rounded-lg;
-    @apply text-fg-0 placeholder-fg-subtle outline-none;
-    @apply focus:border-accent-2 focus:shadow-lg transition-all duration-200;
-  }
-}
-
-.moving-gradient-bg {
+body::before {
+  content: '';
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  inset: 0;
   background: radial-gradient(
-    circle at 20% 50%,
-    rgba(0, 255, 247, 0.03) 0%,
-    transparent 25%
-  ),
-  radial-gradient(
-    circle at 80% 50%,
-    rgba(255, 45, 149, 0.03) 0%,
-    transparent 25%
-  ),
-  radial-gradient(
-    circle at 50% 80%,
-    rgba(138, 107, 255, 0.03) 0%,
-    transparent 25%
+    ellipse 1200px 800px at 50% 20%,
+    #0A001A 0%,
+    #000000 60%
   );
-  animation: gradient-move 20s ease-in-out infinite alternate;
+  z-index: -2;
   pointer-events: none;
-  z-index: 0;
 }
 
-@keyframes gradient-move {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  100% {
-    transform: translate(10%, 10%) rotate(360deg);
-  }
-}
-
-.cinematic-pause-overlay {
+/* Ambient light flare - Left (Magenta) */
+body::after {
+  content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: pause-effect 0.5s ease-out;
+  width: 800px;
+  height: 800px;
+  top: 20%;
+  left: -10%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 0, 230, 0.25) 0%,
+    rgba(255, 0, 230, 0.1) 30%,
+    transparent 60%
+  );
+  filter: blur(100px);
+  z-index: -1;
+  pointer-events: none;
+  animation: ambient-pulse-left 18s ease-in-out infinite;
 }
 
-@keyframes pause-effect {
-  0% {
-    opacity: 0;
-    filter: blur(10px);
-  }
-  50% {
-    filter: saturate(0) brightness(2);
-  }
-  100% {
-    opacity: 1;
-    filter: saturate(1) brightness(1);
-  }
-}
-
-.glitch-wipe {
-  animation: glitch 0.3s steps(2, end);
-}
-
-@keyframes glitch {
-  0% {
-    clip-path: inset(0 0 0 0);
-    transform: translate(0);
-  }
-  25% {
-    clip-path: inset(0 0 60% 0);
-    transform: translate(-5px, 5px);
-  }
-  50% {
-    clip-path: inset(60% 0 0 0);
-    transform: translate(5px, -5px);
-  }
-  75% {
-    clip-path: inset(0 0 30% 0);
-    transform: translate(-3px, 3px);
-  }
-  100% {
-    clip-path: inset(0 0 0 0);
-    transform: translate(0);
-  }
-}
-
-.breathing-glow {
-  animation: breathing 2s ease-in-out infinite;
-}
-
-@keyframes breathing {
+@keyframes ambient-pulse-left {
   0%, 100% {
-    box-shadow: 0 0 20px var(--accent-1), 0 0 40px var(--accent-1);
+    opacity: 0.5;
+    transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 30px var(--accent-1), 0 0 60px var(--accent-1);
+    opacity: 0.8;
+    transform: scale(1.1);
   }
 }
 
+/* Font imports */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700&display=swap');
+
+/* Neon color variables */
+:root {
+  --neon-magenta: #FF00E6;
+  --neon-violet: #B400FF;
+  --neon-cyan: #00FFFF;
+  --neon-lime: #00FF88;
+}

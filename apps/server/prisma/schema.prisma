@@ -44,16 +44,19 @@ model Player {
 }
 
 model Round {
-  id          String   @id @default(cuid())
-  roomId      String
-  index       Int
-  videoType   String
-  videoId     String?
-  videoUrl    String?
-  videoTitle  String?
-  durationSec Float?
-  status      String   @default("pending")
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  roomId          String
+  index           Int
+  videoType       String
+  videoId         String?
+  videoUrl        String?
+  videoTitle      String?
+  durationSec     Float?
+  streamUrl       String?
+  streamPlatform  String?
+  streamDelaySec  Int      @default(10)
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
 
   room              Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
   parlays           Parlay[]
@@ -68,15 +71,16 @@ model Round {
 }
 
 model VideoQueue {
-  id          String   @id @default(cuid())
-  roomId      String
-  videoType   String
-  videoId     String?
-  videoUrl    String?
-  title       String?
-  addedBy     String
-  order       Int
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  roomId          String
+  videoType       String
+  videoId         String?
+  videoUrl        String?
+  title           String?
+  streamPlatform  String?
+  addedBy         String
+  order           Int
+  createdAt       DateTime @default(now())
 
   room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
