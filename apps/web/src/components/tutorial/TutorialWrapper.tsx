@@ -1,0 +1,53 @@
+'use client';
+
+import { tutorialSteps } from '@parlay-party/shared';
+import { TutorialOverlay } from './TutorialOverlay';
+
+interface TutorialWrapperProps {
+  onComplete: () => void;
+  onClose?: () => void;
+  isHost?: boolean;
+}
+
+export default function TutorialWrapper({ onComplete, onClose, isHost = false }: TutorialWrapperProps) {
+  // Filter steps based on whether this is host or player
+  const steps = tutorialSteps.filter(step => {
+    if (isHost) {
+      // Show host-specific steps or general steps
+      return step.role === 'host' || step.role === 'all';
+    } else {
+      // Show player-specific steps or general steps
+      return step.role === 'player' || step.role === 'all';
+    }
+  });
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999]">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+      
+      {/* Close button */}
+      <button
+        onClick={handleClose}
+        className="absolute top-4 right-4 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors z-[10000]"
+      >
+        <X className="w-6 h-6 text-white" />
+      </button>
+
+      <TutorialOverlay 
+        steps={steps} 
+        onComplete={onComplete}
+        isActive={true}
+      />
+    </div>
+  );
+}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { audioManager } from '@/lib/audio';
 import { useSocket, measureLatency, useGameState, useErrorHandler } from '@/hooks';
+import { useWebRTC } from '@/hooks/useWebRTC';
 import PlayerLobby from '@/components/PlayerLobby';
 import PlayerParlayEntry from '@/components/mobile/PlayerParlayEntry';
 import PlayerParlayLocked from '@/components/mobile/PlayerParlayLocked';
@@ -34,6 +35,17 @@ export default function PlayerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showReveal, setShowReveal] = useState(false);
+
+  // WebRTC for instant parlay calling
+  const { sendParlayCalled } = useWebRTC({
+    socket,
+    roomCode,
+    isHost: false,
+    onParlayCalled: (parlayId, callerId) => {
+      // Handle instant parlay called notification
+      console.log(`Parlay ${parlayId} called by ${callerId} via WebRTC`);
+    }
+  });
 
   useEffect(() => {
     if (!socket || !connected) return;
@@ -231,7 +243,17 @@ export default function PlayerPage() {
             };
           })}
           onCallEvent={() => {
-            // This would open the parlay picker modal
+            // Send instant parlay call via WebRTC
+            const currentPlayerParlay = parlays.find(p => p.playerId === currentPlayer.id);
+            if (currentPlayerParlay) {
+              sendParlayCalled(currentPlayerParlay.id);
+              // Also emit via regular socket as fallback
+              socket.emit('vote:add', {
+                parlayText: currentPlayerParlay.text,
+                normalizedText: currentPlayerParlay.text.toLowerCase(),
+                tVideoSec: 0 // This should be the current video time
+              });
+            }
           }}
         />
       )}

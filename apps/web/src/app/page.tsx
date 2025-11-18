@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { generateRoomCode } from '@parlay-party/shared';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
-import { Instagram } from 'lucide-react';
+import { Instagram, HelpCircle } from 'lucide-react';
+import TutorialWrapper from '@/components/tutorial/TutorialWrapper';
 
 export default function HomePage() {
   const router = useRouter();
@@ -15,6 +16,16 @@ export default function HomePage() {
   const [clickedButton, setClickedButton] = useState<string | null>(null);
   const [flickerLetter, setFlickerLetter] = useState<number | null>(null);
   const [flickerColor, setFlickerColor] = useState<string>('');
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Check if user has seen tutorial before
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('parlay-party-tutorial-completed');
+    if (!hasSeenTutorial) {
+      // Show tutorial automatically for new users
+      setTimeout(() => setShowTutorial(true), 1000);
+    }
+  }, []);
 
   // Periodic random letter flicker every ~7 seconds
   useEffect(() => {
@@ -52,12 +63,16 @@ export default function HomePage() {
     setShowJoinForm(!showJoinForm);
   };
 
-  const handleCreateClick = () => {
+  const handleCreateClick = (tutorial = false) => {
     setClickedButton('create');
     setTimeout(() => setClickedButton(null), 300);
     const code = generateRoomCode();
     console.log('Creating room with code:', code);
-    router.push(`/host/${code}`);
+    if (tutorial) {
+      router.push(`/host/${code}?tutorial=true`);
+    } else {
+      router.push(`/host/${code}`);
+    }
   };
 
   const handleEnterClick = () => {
@@ -273,7 +288,7 @@ export default function HomePage() {
 
           {/* Create Room Button */}
           <motion.button
-            onClick={handleCreateClick}
+            onClick={() => handleCreateClick(false)}
             className={`rainbow-hover-button w-full h-14 rounded-lg uppercase tracking-widest transition-all relative overflow-hidden group ${
               clickedButton === 'create' ? 'neon-flash' : ''
             }`}
@@ -284,6 +299,22 @@ export default function HomePage() {
             whileTap={{ scale: 0.98 }}
           >
             <span className="relative z-10 block w-full text-center">Create Room</span>
+          </motion.button>
+
+          {/* Tutorial Mode Button */}
+          <motion.button
+            onClick={() => handleCreateClick(true)}
+            className="rainbow-hover-button w-full h-14 rounded-lg uppercase tracking-widest transition-all relative overflow-hidden group"
+            style={{ fontFamily: 'Orbitron, sans-serif' }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1.0 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <span className="relative z-10 block w-full text-center flex items-center justify-center gap-2">
+              <HelpCircle className="w-5 h-5" />
+              Tutorial Mode
+            </span>
           </motion.button>
         </motion.div>
 
@@ -347,8 +378,43 @@ export default function HomePage() {
               <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.074.074 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
             </svg>
           </motion.a>
+
+          {/* Tutorial Icon */}
+          <motion.a
+            onClick={() => setShowTutorial(true)}
+            className="social-neon-icon"
+            aria-label="View Tutorial"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{
+              y: [0, -2, 0],
+            }}
+            transition={{
+              y: {
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1
+              }
+            }}
+          >
+            <div className="social-icon-ring" />
+            <HelpCircle className="w-8 h-8 relative z-10" style={{ opacity: 0.9 }} />
+          </motion.a>
         </motion.div>
       </div>
+
+      {/* Tutorial Overlay */}
+      {showTutorial && (
+        <TutorialWrapper 
+          onComplete={() => {
+            setShowTutorial(false);
+            localStorage.setItem('parlay-party-tutorial-completed', 'true');
+          }}
+          onClose={() => setShowTutorial(false)}
+          isHost={false}
+        />
+      )}
 
       {/* CSS for liquid rainbow effects */}
       <style jsx>{`

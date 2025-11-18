@@ -29,6 +29,13 @@ export interface ServerToClientEvents {
   'queue:updated': (data: { videos: VideoQueueItem[] }) => void;
   'tyler:sound': () => void;
   'game:over': (data: { finalScores: { id: string; name: string; scoreTotal: number }[]; winner: { id: string; name: string; scoreTotal: number } | null }) => void;
+  'webrtc:offer': (data: { from: string; offer: RTCSessionDescriptionInit }) => void;
+  'webrtc:answer': (data: { from: string; answer: RTCSessionDescriptionInit }) => void;
+  'webrtc:ice-candidate': (data: { from: string; candidate: RTCIceCandidateInit }) => void;
+  'webrtc:peer-left': (data: { peerId: string }) => void;
+  'webrtc:parlay-called': (data: { from: string; parlayId: string; timestamp: number }) => void;
+  'webrtc:vote-update': (data: { from: string; votes: any; timestamp: number }) => void;
+  'webrtc:reaction': (data: { from: string; reaction: string; timestamp: number }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -59,5 +66,8 @@ export interface ClientToServerEvents {
   'wheel:complete': () => void;
   'ping': (callback: (response: number) => void) => void;
   'player:requestParlays': () => void;
+  'webrtc:offer': (data: { to: string; offer: RTCSessionDescriptionInit }) => void;
+  'webrtc:answer': (data: { to: string; answer: RTCSessionDescriptionInit }) => void;
+  'webrtc:ice-candidate': (data: { to: string; candidate: RTCIceCandidateInit }) => void;
 }
 

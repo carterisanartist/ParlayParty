@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useSocket } from '@/lib/socket';
 import { audioManager } from '@/lib/audio';
+import { useWebRTC } from '@/hooks/useWebRTC';
 import { VFXLayer } from '@/components/legacy/VFXLayer';
 import HostLobby from '@/components/HostLobby';
 import HostParlayEntry from '@/components/host/HostParlayEntry';
@@ -11,6 +12,7 @@ import HostParlayReveal from '@/components/host/HostParlayReveal';
 import HostVideoPhase from '@/components/host/HostVideoPhase';
 import HostResults from '@/components/host/HostResults';
 import HostWheelPhase from '@/components/host/HostWheelPhase';
+import TutorialWrapper from '@/components/tutorial/TutorialWrapper';
 // Temporarily use legacy components for missing ones
 import { ReviewPhase } from '@/components/legacy/host/ReviewPhase';
 import { TylerSoundPlayer } from '@/components/legacy/TylerSoundPlayer';
@@ -18,6 +20,7 @@ import type { Player, Room, Round, RoomStatus, Parlay } from '@parlay-party/shar
 
 export default function HostPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const roomCode = params.code as string;
   const { socket, connected } = useSocket(roomCode);
   
@@ -28,6 +31,29 @@ export default function HostPage() {
   const [status, setStatus] = useState<RoomStatus>('lobby');
   const [showReveal, setShowReveal] = useState(false);
   const [parlays, setParlays] = useState<Parlay[]>([]);
+  const [showTutorial, setShowTutorial] = useState(false);
+  
+  // WebRTC for instant parlay notifications
+  const { connectedPeers, latency } = useWebRTC({
+    socket,
+    roomCode,
+    isHost: true,
+    onParlayCalled: (parlayId, callerId) => {
+      // Show instant notification for parlay called
+      console.log(`🚀 WebRTC: Parlay ${parlayId} called by ${callerId} - Latency: ${latency}ms`);
+      // Update UI to show parlay was called
+      setParlays(prev => prev.map(p => 
+        p.id === parlayId ? { ...p, completed: true } : p
+      ));
+    }
+  });
+  
+  // Check if tutorial mode is enabled
+  useEffect(() => {
+    if (searchParams.get('tutorial') === 'true') {
+      setShowTutorial(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!socket || !connected) return;
@@ -199,6 +225,17 @@ export default function HostPage() {
       </div>
       
       <TylerSoundPlayer socket={socket} />
+      
+      {showTutorial && (
+        <TutorialWrapper 
+          onComplete={() => {
+            setShowTutorial(false);
+            localStorage.setItem('parlay-party-tutorial-completed', 'true');
+          }}
+          onClose={() => setShowTutorial(false)}
+          isHost={true}
+        />
+      )}
     </VFXLayer>
   );
 }

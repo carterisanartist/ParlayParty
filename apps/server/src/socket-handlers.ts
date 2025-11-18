@@ -19,6 +19,7 @@ import {
   parlaySubmitSchema,
   voteAddSchema 
 } from './validation';
+import { setupWebRTCHandlers } from './webrtc-handlers';
 import { logger, gameLogger } from './logger';
 import { cacheManager } from './cache';
 import { speedScoring } from './scoring/speed-scoring';
@@ -1004,6 +1005,9 @@ export function setupSocketHandlers(io: Server) {
       
       socket.emit('powerups:playersList', { players });
     });
+    
+    // Set up WebRTC handlers for low-latency peer connections
+    setupWebRTCHandlers(io, socket);
     
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
