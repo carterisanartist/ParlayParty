@@ -1,6 +1,6 @@
 'use client';
 
-import { tutorialSteps } from '@parlay-party/shared';
+import { hostTutorialSteps, playerTutorialSteps } from '@parlay-party/shared';
 import { TutorialOverlay } from './TutorialOverlay';
 
 interface TutorialWrapperProps {
@@ -10,16 +10,8 @@ interface TutorialWrapperProps {
 }
 
 export default function TutorialWrapper({ onComplete, onClose, isHost = false }: TutorialWrapperProps) {
-  // Filter steps based on whether this is host or player
-  const steps = tutorialSteps.filter(step => {
-    if (isHost) {
-      // Show host-specific steps or general steps
-      return step.role === 'host' || step.role === 'all';
-    } else {
-      // Show player-specific steps or general steps
-      return step.role === 'player' || step.role === 'all';
-    }
-  });
+  // Use appropriate tutorial steps based on role
+  const steps = isHost ? hostTutorialSteps : playerTutorialSteps;
 
   const handleClose = () => {
     if (onClose) {
